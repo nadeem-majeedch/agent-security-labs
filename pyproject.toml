@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agentsec"
+version = "0.0.1"
+description = "AI Agent Security Lab - educational, reproducible agent-security infrastructure (Phase A skeleton)."
+readme = "docs/development.md"
+requires-python = ">=3.11"
+license = { text = "TBD" }
+# Core runtime dependencies only (Phase 14 dependency audit, Task 22).
+# PyYAML and httpx are added only when the components that need them land
+# (config/policy/scenario loading and live provider adapters respectively).
+dependencies = [
+    "pydantic>=2.6",
+    "jsonschema>=4.20",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.4"]
+# Planned, not yet required by any implemented module:
+yaml = ["PyYAML>=6.0"]
+live = ["httpx>=0.27"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-q"
