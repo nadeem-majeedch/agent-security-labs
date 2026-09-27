@@ -19,6 +19,7 @@ from .factory import build_gateway, build_tools, tool_names
 from .fs_sandbox import FsSandboxTool, normalize_path
 from .gateway import ToolGateway
 from .mock_db import MockDatabaseTool
+from .mock_email import MockEmailTool
 
 __all__ = [
     "BaseTool",
@@ -34,6 +35,7 @@ __all__ = [
     "FsSandboxTool",
     "normalize_path",
     "MockDatabaseTool",
+    "MockEmailTool",
     "ToolGateway",
     "build_tools",
     "build_gateway",

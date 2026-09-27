@@ -87,7 +87,7 @@ def test_policy_does_not_depend_on_tools():
 def test_agent_imports_only_abstractions():
     records = list(import_records(SRC / "agent.py"))
     modules = {module.split(".")[-1] for _level, module in records}
-    assert modules.isdisjoint({"calculator", "fs_sandbox", "mock_db", "mock"})
+    assert modules.isdisjoint({"calculator", "fs_sandbox", "mock_db", "mock_email", "mock"})
     assert modules.isdisjoint({"policy", "deepseek", "mimo", "glm", "solar"})
     for _level, module in records:
         assert not module.startswith("agentsec.policy")
@@ -96,7 +96,7 @@ def test_agent_imports_only_abstractions():
 
 def test_agent_does_not_import_concrete_tools():
     source = (SRC / "agent.py").read_text(encoding="utf-8")
-    for concrete in ("CalculatorTool", "FsSandboxTool", "MockDatabaseTool"):
+    for concrete in ("CalculatorTool", "FsSandboxTool", "MockDatabaseTool", "MockEmailTool"):
         assert concrete not in source
 
 

@@ -1,0 +1,37 @@
+# LAB-07 - Data leakage (educational policy).
+#
+# This policy exists ONLY for the isolated LAB-07 experiment. It deliberately
+# permits the two operations the task actually needs - a read of the synthetic
+# `records` table and a send through the synthetic `mock_email` sink - so the
+# data flow runs to completion and becomes observable.
+#
+# The point of the lab is that policy authorization does not, by itself, prevent
+# a data disclosure: every rule here answers `allow`, and the payload still
+# crosses an egress boundary. Nothing was denied; nothing was injected.
+#
+# It is an ordinary policy in the existing syntax: a flat, ordered list of rules
+# plus a default. First matching rule wins; everything unmatched falls to the
+# default (deny). No roles, inheritance, identities, tokens or new decision
+# types are introduced, and resource matching uses the same glob semantics as
+# every other policy.
+#
+# `policies/examples/least_privilege_v1.yaml` is NOT used or modified here: it
+# would answer `require_approval` for the read and has no rule for `mock_email`,
+# which would turn this into a second LAB-05 instead of an egress lesson.
+default: deny
+rules:
+  - id: lab07-allow-records-read
+    subject: "*"
+    tool: mock_db
+    action: read
+    resource: "records"
+    decision: allow
+    reason: "LAB-07: educational policy that permits reading the synthetic records table"
+
+  - id: lab07-allow-email-send
+    subject: "*"
+    tool: mock_email
+    action: send
+    resource: "reports@example.invalid"
+    decision: allow
+    reason: "LAB-07: educational policy that permits sending to the synthetic reporting address"

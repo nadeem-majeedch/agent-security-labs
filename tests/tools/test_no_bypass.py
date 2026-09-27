@@ -127,7 +127,7 @@ def test_no_public_method_runs_a_tool_directly():
 
 def test_build_gateway_mediates_factory_built_tools():
     gw = build_gateway(policy(Decision.ALLOW, tool="calculator"))
-    assert gw.list_tools() == ["calculator", "fs_sandbox", "mock_db"]
+    assert gw.list_tools() == ["calculator", "fs_sandbox", "mock_db", "mock_email"]
     assert gw.invoke("student-agent", "calculator", {"expr": "2+3"}).ok is True
 
 

@@ -386,6 +386,7 @@ def test_tool_specs_are_advertised_to_the_model():
         "calculator",
         "fs_sandbox",
         "mock_db",
+        "mock_email",
     }
     agent = Agent(MockModel(script([answer("ok")], answer("f"))), gateway, config=AgentConfig())
     result = agent.run("hi")

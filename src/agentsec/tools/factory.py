@@ -7,7 +7,7 @@ there is no supported path that executes a tool without a policy decision.
 
 from __future__ import annotations
 
-from typing import Iterable, Mapping
+from typing import Any, Iterable, Mapping
 
 from ..errors import ConfigError
 from ..policy.base import PolicyEngine
@@ -17,12 +17,14 @@ from .calculator import CalculatorTool
 from .fs_sandbox import FsSandboxTool
 from .gateway import Approver, ToolGateway
 from .mock_db import MockDatabaseTool
+from .mock_email import MockEmailTool
 
 #: The tools available in the MVP, by name.
 TOOL_FACTORIES: dict[str, type[Tool]] = {
     CalculatorTool.name: CalculatorTool,
     FsSandboxTool.name: FsSandboxTool,
     MockDatabaseTool.name: MockDatabaseTool,
+    MockEmailTool.name: MockEmailTool,
 }
 
 
@@ -36,6 +38,7 @@ def build_tools(
     *,
     sandbox_files: Mapping[str, str] | None = None,
     sandbox_db_writes: bool = False,
+    sandbox_db_seed: Mapping[str, list[dict[str, Any]]] | None = None,
 ) -> dict[str, Tool]:
     """Build a fresh ``{name: Tool}`` mapping.
 
@@ -45,7 +48,10 @@ def build_tools(
     content (still memory-only); it requires that tool to be selected.
     ``sandbox_db_writes`` builds the in-memory ``mock_db`` writable so a lab can
     observe a synthetic state change; it requires that tool to be selected and
-    leaves every other lab read-only.
+    leaves every other lab read-only. ``sandbox_db_seed`` optionally replaces
+    the in-memory ``mock_db`` synthetic seed with a per-lab one (still
+    memory-only and per-instance); it requires that tool to be selected and
+    leaves the global database defaults untouched.
     """
     selected = tool_names() if names is None else list(names)
     tools: dict[str, Tool] = {}
@@ -61,7 +67,13 @@ def build_tools(
         if FsSandboxTool.name not in tools:
             raise ConfigError("sandbox_files requires the fs_sandbox tool")
         tools[FsSandboxTool.name] = FsSandboxTool(sandbox_files)
-    if sandbox_db_writes:
+    if sandbox_db_seed:
+        if MockDatabaseTool.name not in tools:
+            raise ConfigError("sandbox_db_seed requires the mock_db tool")
+        tools[MockDatabaseTool.name] = MockDatabaseTool(
+            seed=sandbox_db_seed, read_only=not sandbox_db_writes
+        )
+    elif sandbox_db_writes:
         if MockDatabaseTool.name not in tools:
             raise ConfigError("sandbox_db_writes requires the mock_db tool")
         tools[MockDatabaseTool.name] = MockDatabaseTool(read_only=False)
@@ -78,14 +90,16 @@ def build_gateway(
     raise_on_denied: bool = False,
     sandbox_files: Mapping[str, str] | None = None,
     sandbox_db_writes: bool = False,
+    sandbox_db_seed: Mapping[str, list[dict[str, Any]]] | None = None,
 ) -> ToolGateway:
     """Wire tools, policy and (optionally) a recorder into a gateway.
 
     This is the only supported way to obtain a gateway, and a gateway is the
     only supported way to execute a tool. ``sandbox_files`` seeds the in-memory
-    ``fs_sandbox`` workspace when the gateway builds its own tools, and
+    ``fs_sandbox`` workspace when the gateway builds its own tools;
     ``sandbox_db_writes`` makes the in-memory ``mock_db`` writable when the
-    gateway builds its own tools.
+    gateway builds its own tools; and ``sandbox_db_seed`` replaces the in-memory
+    ``mock_db`` synthetic seed when the gateway builds its own tools.
     """
     if tools is not None and names is not None:
         raise ConfigError("pass either 'tools' or 'names', not both")
@@ -93,11 +107,16 @@ def build_gateway(
         raise ConfigError("pass either 'tools' or 'sandbox_files', not both")
     if tools is not None and sandbox_db_writes:
         raise ConfigError("pass either 'tools' or 'sandbox_db_writes', not both")
+    if tools is not None and sandbox_db_seed:
+        raise ConfigError("pass either 'tools' or 'sandbox_db_seed', not both")
     built = (
         tools
         if tools is not None
         else build_tools(
-            names, sandbox_files=sandbox_files, sandbox_db_writes=sandbox_db_writes
+            names,
+            sandbox_files=sandbox_files,
+            sandbox_db_writes=sandbox_db_writes,
+            sandbox_db_seed=sandbox_db_seed,
         )
     )
     return ToolGateway(

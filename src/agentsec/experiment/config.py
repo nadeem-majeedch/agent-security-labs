@@ -14,6 +14,7 @@ quietly defaulting.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
@@ -49,6 +50,12 @@ class ExperimentConfig(BaseModel):
     #: no real database is involved, and every existing lab keeps the default
     #: read-only sandbox. Off by default.
     sandbox_db_writes: bool = False
+    #: Optional replacement seed for the in-memory ``mock_db`` tool, keyed by
+    #: table name. Purely synthetic fixture data held in memory; it never touches
+    #: a host database and leaves the global database defaults untouched, so a
+    #: lab can give the sandbox a controlled record. Empty by default (the
+    #: shared ``mock_db`` seed is used).
+    sandbox_db_seed: dict[str, list[dict[str, Any]]] = Field(default_factory=dict)
 
 
 def load_experiment_config(path: str | Path) -> ExperimentConfig:

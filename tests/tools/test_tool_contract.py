@@ -11,7 +11,7 @@ from agentsec.tools.factory import build_tools, tool_names
 
 def test_factory_builds_all_mvp_tools():
     tools = build_tools()
-    assert sorted(tools) == ["calculator", "fs_sandbox", "mock_db"]
+    assert sorted(tools) == ["calculator", "fs_sandbox", "mock_db", "mock_email"]
     assert set(tools) == set(tool_names())
 
 
