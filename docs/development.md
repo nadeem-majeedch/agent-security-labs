@@ -6,10 +6,11 @@ redaction, a deterministic mock model, **sandboxed tools**, the **mediated
 ToolGateway**, the **minimal PolicyEngine**, a small **deterministic agent
 loop**, a **read-only descriptive evaluator**, a **thin one-run experiment
 runner**, a **thin command-line interface**, a **declarative scenario layer**
-and the **first five student labs** (LAB-00 setup verification, LAB-01
-benign-agent observation, and the first three adversarial observation labs:
-LAB-02 direct prompt injection, LAB-03 indirect prompt injection and LAB-04
-tool misuse). There are
+and the **first six student labs** (LAB-00 setup verification, LAB-01
+benign-agent observation, the first three adversarial observation labs
+(LAB-02 direct prompt injection, LAB-03 indirect prompt injection, LAB-04
+tool misuse), and LAB-05, which observes the `require_approval` decision).
+There are
 deliberately no real model adapters and **no defences yet** - the adversarial
 labs observe behaviour only.
 
@@ -83,7 +84,8 @@ labs/
 ├── LAB-01-benign-agent/         # README.md, config.yaml, scenario.yaml
 ├── LAB-02-direct-prompt-injection/   # README.md, config.yaml, scenario.yaml
 ├── LAB-03-indirect-prompt-injection/ # README.md, config.yaml, scenario.yaml
-└── LAB-04-tool-misuse/               # README.md, config.yaml, scenario.yaml
+├── LAB-04-tool-misuse/               # README.md, config.yaml, scenario.yaml
+└── LAB-05-require-approval/          # README.md, config.yaml, scenario.yaml
 ```
 
 ## Trace schema
@@ -124,7 +126,9 @@ the task, one arriving in a tool's returned content - by requesting an otherwise
 unrelated sandbox operation, and discloses nothing. Every tool call in those
 scripts is schema-valid for the Step 2 tools, so the tools and the mock already
 agree. LAB-04 reuses the existing `tool_misuse` fixture directly: no injected
-instruction, just an over-broad filesystem write that the policy denies.
+instruction, just an over-broad filesystem write that the policy denies. LAB-05
+adds one small fixture, `approval_read`: a legitimate `mock_db` read that the
+existing `db-read-requires-approval` policy rule holds for approval.
 
 ## Tools
 
@@ -498,6 +502,7 @@ correct run should produce.
 | `LAB-02-direct-prompt-injection` | Observe an untrusted instruction placed **directly in the task** change what the agent does. | `README.md`, `config.yaml`, `scenario.yaml` |
 | `LAB-03-indirect-prompt-injection` | Observe an untrusted instruction arriving **through content a sandbox tool returns**, then driving a follow-up tool request. | `README.md`, `config.yaml`, `scenario.yaml` |
 | `LAB-04-tool-misuse` | Observe a **legitimate tool requested with an out-of-scope argument**; the policy denies it, so the tool never executes. | `README.md`, `config.yaml`, `scenario.yaml` |
+| `LAB-05-require-approval` | Observe the third policy decision: a legitimate request answered with **`require_approval`**, held pending, so the tool does not execute without authorization. | `README.md`, `config.yaml`, `scenario.yaml` |
 
 `config.yaml` is an ordinary `ExperimentConfig` run with
 `agentsec run <config.yaml>`. `scenario.yaml` is a `ScenarioDef`: it embeds the

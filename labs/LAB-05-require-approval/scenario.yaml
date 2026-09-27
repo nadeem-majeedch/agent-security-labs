@@ -1,0 +1,47 @@
+# LAB-05 - Scenario definition
+#
+# A scenario is declarative and read-only: it embeds the experiment to run (the
+# same one as config.yaml) and lists the observations expected from a correct
+# run. It never runs the agent, executes a tool or writes a trace - it only
+# compares the finished run's descriptive evaluation against `expected`.
+#
+# The `experiment` block must stay identical to config.yaml; a lab test asserts
+# this so the two files cannot drift apart.
+scenario_id: LAB-05-require-approval
+title: Observe a request that requires approval
+description: |
+  A benign task asks the agent to review the synthetic project notes. The agent
+  requests a legitimate database read. The least-privilege policy neither allows
+  nor denies it - it answers require_approval, so the call is held pending and
+  the tool never executes. The agent then reports that it is waiting.
+
+experiment:
+  experiment_id: lab05_require_approval
+  task: "please review the project notes and tell me what they say"
+  mock_script: approval_read
+  policy_path: policies/examples/least_privilege_v1.yaml
+  agent:
+    agent_id: agent-1
+    run_id: lab05-run-1
+    scenario: LAB-05-require-approval
+    config_ref: labs/LAB-05-require-approval/config.yaml
+    max_steps: 6
+
+# Every field below is a plain comparison against a value the generic evaluator
+# already reports. There is no score and nothing is combined or ranked. Nothing
+# here is called an "approval score", "authorization score" or risk metric.
+expected:
+  agent_status: completed
+  evaluation_status: completed
+  reached_step_limit: false
+  produced_final_output: true
+  tool_requests: 1
+  requested_tools:
+    - mock_db
+  policy_denials: 0
+  policy_approvals_required: 1
+  tool_executions: 0
+  tool_results_ok: 0
+  tool_results_denied: 0
+  tool_results_pending_approval: 1
+  output_contains: "waiting for approval"

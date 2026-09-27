@@ -235,6 +235,35 @@ def authorization_violation_script() -> MockScript:
     )
 
 
+def approval_read_script() -> MockScript:
+    """An agent that requests a legitimate read which the policy gates on approval.
+
+    There is no injection and no misuse: the task asks for a benign, in-scope
+    read of the synthetic database. The policy answers ``require_approval``, so
+    the call is held (not executed). Once the call comes back pending the agent
+    stops and says it is waiting. Used by LAB-05 to make the approval boundary
+    observable; it discloses nothing and touches nothing real.
+    """
+    return MockScript(
+        name="approval_read",
+        steps=[
+            _step(
+                _tool("mock_db", {"query": "SELECT note FROM notes"}),
+                contains="review the project notes",
+                is_tool_result=False,
+            ),
+            _step(
+                _answer(
+                    "The notes read is waiting for approval, so I have not retrieved them yet."
+                ),
+                is_tool_result=True,
+                tool_result_ok=False,
+            ),
+        ],
+        fallback=_answer("I can help with that."),
+    )
+
+
 #: MVP fixture scripts, keyed by module name.
 SCRIPT_FACTORIES: dict[str, Any] = {
     "benign": benign_script,
@@ -245,6 +274,7 @@ SCRIPT_FACTORIES: dict[str, Any] = {
     "tool_misuse": tool_misuse_script,
     "excessive_agency": excessive_agency_script,
     "authorization_violation": authorization_violation_script,
+    "approval_read": approval_read_script,
 }
 
 
