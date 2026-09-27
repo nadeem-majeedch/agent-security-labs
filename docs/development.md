@@ -6,10 +6,12 @@ redaction, a deterministic mock model, **sandboxed tools**, the **mediated
 ToolGateway**, the **minimal PolicyEngine**, a small **deterministic agent
 loop**, a **read-only descriptive evaluator**, a **thin one-run experiment
 runner**, a **thin command-line interface**, a **declarative scenario layer**
-and the **first six student labs** (LAB-00 setup verification, LAB-01
+and the **first seven student labs** (LAB-00 setup verification, LAB-01
 benign-agent observation, the first three adversarial observation labs
 (LAB-02 direct prompt injection, LAB-03 indirect prompt injection, LAB-04
-tool misuse), and LAB-05, which observes the `require_approval` decision).
+tool misuse), LAB-05, which observes the `require_approval` decision, and
+LAB-06, which observes an **authorized but unnecessary** state-changing action
+that actually executes).
 There are
 deliberately no real model adapters and **no defences yet** - the adversarial
 labs observe behaviour only.
@@ -78,14 +80,15 @@ src/agentsec/
     ├── recorder.py      # TraceRecorder (stamps header, redacts, validates)
     └── writer.py        # append-only JSONL I/O
 schemas/trace/trace_event.v1.schema.json   # versioned trace contract
-policies/examples/                          # deny_by_default, least_privilege_v1
+policies/examples/                          # deny_by_default, least_privilege_v1, lab06_excessive_agency_v1
 labs/
 ├── LAB-00-setup/                # README.md, config.yaml (environment verification)
 ├── LAB-01-benign-agent/         # README.md, config.yaml, scenario.yaml
 ├── LAB-02-direct-prompt-injection/   # README.md, config.yaml, scenario.yaml
 ├── LAB-03-indirect-prompt-injection/ # README.md, config.yaml, scenario.yaml
 ├── LAB-04-tool-misuse/               # README.md, config.yaml, scenario.yaml
-└── LAB-05-require-approval/          # README.md, config.yaml, scenario.yaml
+├── LAB-05-require-approval/          # README.md, config.yaml, scenario.yaml
+└── LAB-06-excessive-agency/          # README.md, config.yaml, scenario.yaml
 ```
 
 ## Trace schema
@@ -128,7 +131,10 @@ scripts is schema-valid for the Step 2 tools, so the tools and the mock already
 agree. LAB-04 reuses the existing `tool_misuse` fixture directly: no injected
 instruction, just an over-broad filesystem write that the policy denies. LAB-05
 adds one small fixture, `approval_read`: a legitimate `mock_db` read that the
-existing `db-read-requires-approval` policy rule holds for approval.
+existing `db-read-requires-approval` policy rule holds for approval. LAB-06
+reuses the existing `excessive_agency` fixture directly: no injection and no
+misuse, just a state-changing `mock_db` write that the lab's own policy allows,
+so the tool executes and leaves an observable (synthetic) side effect.
 
 ## Tools
 
@@ -156,7 +162,9 @@ independently testable. Concrete tools are built **only** through
   `INSERT`, `UPDATE`, `DELETE`, with an optional single `WHERE col = value` and
   `?` parameters. Default `read_only=True`, so writes raise
   `ToolExecutionError` unless the tool is built writable. Each instance holds
-  its own copy of the synthetic seed.
+  its own copy of the synthetic seed. `build_tools(..., sandbox_db_writes=True)`
+  builds it writable for a lab that needs to observe a synthetic state change;
+  nothing else changes and every other lab stays read-only.
 
 **Sandbox boundary.** Tools enforce *containment* (a request cannot leave the
 sandbox). Which resources *within* the sandbox an agent may touch is a **policy**
@@ -279,9 +287,11 @@ parallel runs, sweeps or retries.
 
 `ExperimentConfig` is composed, not copied: it carries `experiment_id`, `task`,
 the existing `AgentConfig`, an optional expected `trace_path`, an optional
-`policy_path`, the `mock_script` name, and an optional `sandbox_files` mapping
+`policy_path`, the `mock_script` name, an optional `sandbox_files` mapping
 that seeds the in-memory `fs_sandbox` workspace with synthetic fixture content
-(memory only; it never touches the host disk). It has no fields for capabilities
+(memory only; it never touches the host disk), and a `sandbox_db_writes` flag
+(default `false`) that builds the in-memory `mock_db` writable so a lab can
+observe a synthetic state change. It has no fields for capabilities
 that do not exist (no temperature, seed, retries, parallelism or credentials).
 `load_experiment_config(path)` parses YAML with the same strict behaviour as the
 policy loader and raises `ConfigError` on a malformed document.
@@ -503,6 +513,7 @@ correct run should produce.
 | `LAB-03-indirect-prompt-injection` | Observe an untrusted instruction arriving **through content a sandbox tool returns**, then driving a follow-up tool request. | `README.md`, `config.yaml`, `scenario.yaml` |
 | `LAB-04-tool-misuse` | Observe a **legitimate tool requested with an out-of-scope argument**; the policy denies it, so the tool never executes. | `README.md`, `config.yaml`, `scenario.yaml` |
 | `LAB-05-require-approval` | Observe the third policy decision: a legitimate request answered with **`require_approval`**, held pending, so the tool does not execute without authorization. | `README.md`, `config.yaml`, `scenario.yaml` |
+| `LAB-06-excessive-agency` | Observe an **authorized but unnecessary** state-changing action: the policy says `allow`, the tool **executes**, and a synthetic side effect is recorded - authorization does not establish necessity. | `README.md`, `config.yaml`, `scenario.yaml` |
 
 `config.yaml` is an ordinary `ExperimentConfig` run with
 `agentsec run <config.yaml>`. `scenario.yaml` is a `ScenarioDef`: it embeds the

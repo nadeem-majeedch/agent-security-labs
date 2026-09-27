@@ -35,6 +35,7 @@ def build_tools(
     names: Iterable[str] | None = None,
     *,
     sandbox_files: Mapping[str, str] | None = None,
+    sandbox_db_writes: bool = False,
 ) -> dict[str, Tool]:
     """Build a fresh ``{name: Tool}`` mapping.
 
@@ -42,6 +43,9 @@ def build_tools(
     :class:`ConfigError` rather than silently skipping it. ``sandbox_files``
     optionally seeds the in-memory ``fs_sandbox`` workspace with synthetic
     content (still memory-only); it requires that tool to be selected.
+    ``sandbox_db_writes`` builds the in-memory ``mock_db`` writable so a lab can
+    observe a synthetic state change; it requires that tool to be selected and
+    leaves every other lab read-only.
     """
     selected = tool_names() if names is None else list(names)
     tools: dict[str, Tool] = {}
@@ -57,6 +61,10 @@ def build_tools(
         if FsSandboxTool.name not in tools:
             raise ConfigError("sandbox_files requires the fs_sandbox tool")
         tools[FsSandboxTool.name] = FsSandboxTool(sandbox_files)
+    if sandbox_db_writes:
+        if MockDatabaseTool.name not in tools:
+            raise ConfigError("sandbox_db_writes requires the mock_db tool")
+        tools[MockDatabaseTool.name] = MockDatabaseTool(read_only=False)
     return tools
 
 
@@ -69,18 +77,29 @@ def build_gateway(
     approver: Approver | None = None,
     raise_on_denied: bool = False,
     sandbox_files: Mapping[str, str] | None = None,
+    sandbox_db_writes: bool = False,
 ) -> ToolGateway:
     """Wire tools, policy and (optionally) a recorder into a gateway.
 
     This is the only supported way to obtain a gateway, and a gateway is the
     only supported way to execute a tool. ``sandbox_files`` seeds the in-memory
-    ``fs_sandbox`` workspace when the gateway builds its own tools.
+    ``fs_sandbox`` workspace when the gateway builds its own tools, and
+    ``sandbox_db_writes`` makes the in-memory ``mock_db`` writable when the
+    gateway builds its own tools.
     """
     if tools is not None and names is not None:
         raise ConfigError("pass either 'tools' or 'names', not both")
     if tools is not None and sandbox_files:
         raise ConfigError("pass either 'tools' or 'sandbox_files', not both")
-    built = tools if tools is not None else build_tools(names, sandbox_files=sandbox_files)
+    if tools is not None and sandbox_db_writes:
+        raise ConfigError("pass either 'tools' or 'sandbox_db_writes', not both")
+    built = (
+        tools
+        if tools is not None
+        else build_tools(
+            names, sandbox_files=sandbox_files, sandbox_db_writes=sandbox_db_writes
+        )
+    )
     return ToolGateway(
         built,
         policy,

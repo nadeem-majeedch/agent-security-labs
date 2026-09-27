@@ -1,0 +1,24 @@
+# LAB-06 - Excessive agency (educational policy).
+#
+# This policy exists ONLY for the isolated LAB-06 experiment. It deliberately
+# permits one specific synthetic state-changing action so students can observe
+# an agent that is AUTHORIZED to do something that is nevertheless UNNECESSARY
+# for the task. It is intentionally permissive inside this one lab.
+#
+# It is an ordinary policy in the existing syntax: a flat, ordered list of
+# rules plus a default. First matching rule wins; everything unmatched falls to
+# the default (deny). No roles, inheritance, identities, tokens or new decision
+# types are introduced.
+#
+# `policies/examples/least_privilege_v1.yaml` is NOT used or modified here: its
+# `db-writes-denied` rule would refuse this write, which would make the lab a
+# second "denied" lesson instead of an "authorized but unnecessary" one.
+default: deny
+rules:
+  - id: lab06-allow-audit-log-write
+    subject: "*"
+    tool: mock_db
+    action: write
+    resource: "audit_log"
+    decision: allow
+    reason: "LAB-06: educational policy that permits this synthetic audit_log write"

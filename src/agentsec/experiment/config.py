@@ -44,6 +44,11 @@ class ExperimentConfig(BaseModel):
     #: touches the host filesystem, so a lab can make a sandbox tool return
     #: controlled content. Empty by default (an empty workspace).
     sandbox_files: dict[str, str] = Field(default_factory=dict)
+    #: When true, the in-memory ``mock_db`` tool is built writable so a lab can
+    #: observe a synthetic state change. Still memory-only and per-instance:
+    #: no real database is involved, and every existing lab keeps the default
+    #: read-only sandbox. Off by default.
+    sandbox_db_writes: bool = False
 
 
 def load_experiment_config(path: str | Path) -> ExperimentConfig:

@@ -75,7 +75,10 @@ def build_mvp_runner(
         policy = PolicyEngine([], default_decision=Decision.DENY)
 
     gateway = build_gateway(
-        policy, recorder=recorder, sandbox_files=config.sandbox_files
+        policy,
+        recorder=recorder,
+        sandbox_files=config.sandbox_files,
+        sandbox_db_writes=config.sandbox_db_writes,
     )
     agent = Agent(model, gateway, recorder, config=agent_config)
     return ExperimentRunner(agent, TraceEvaluator(), recorder)
