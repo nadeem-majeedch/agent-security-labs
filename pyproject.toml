@@ -9,19 +9,21 @@ description = "AI Agent Security Lab - educational, reproducible agent-security 
 readme = "docs/development.md"
 requires-python = ">=3.11"
 license = { text = "TBD" }
-# Core runtime dependencies only (Phase 14 dependency audit, Task 22).
-# PyYAML and httpx are added only when the components that need them land
-# (config/policy/scenario loading and live provider adapters respectively).
+# Core runtime dependencies (Phase 14 dependency audit, Task 22).
+# PyYAML is required by the policy YAML loader; httpx is only pulled in when a
+# live provider adapter is used.
 dependencies = [
     "pydantic>=2.6",
     "jsonschema>=4.20",
+    "PyYAML>=6.0",
 ]
 
 [project.optional-dependencies]
 dev = ["pytest>=7.4"]
-# Planned, not yet required by any implemented module:
-yaml = ["PyYAML>=6.0"]
 live = ["httpx>=0.27"]
+
+[project.scripts]
+agentsec = "agentsec.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

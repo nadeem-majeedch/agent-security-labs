@@ -1,0 +1,4 @@
+# Deny-by-default policy: nothing is authorized unless a rule allows it.
+# Here there are no rules, so every tool call is denied.
+default: deny
+rules: []

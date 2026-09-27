@@ -1,5 +1,6 @@
-"""Trace package: event schema, redaction, validation and JSONL I/O."""
+"""Trace package: event schema, redaction, validation, recording and JSONL I/O."""
 
+from .recorder import TraceMeta, TraceRecorder
 from .redact import DEFAULT_REDACTOR, Redactor, hash_value, redact_value
 from .schema import (
     TRACE_EVENT_TYPES,
@@ -50,6 +51,8 @@ __all__ = [
     "TraceEventEnvelope",
     "UsageCounts",
     "trace_json_schema",
+    "TraceMeta",
+    "TraceRecorder",
     "DEFAULT_REDACTOR",
     "Redactor",
     "hash_value",

@@ -1,0 +1,20 @@
+# LAB-00 - Setup & Environment Verification
+#
+# The smallest possible experiment: a deterministic mock agent that asks the
+# sandboxed calculator for 2 + 3 and then answers. It is used only to prove the
+# environment works end to end (config -> run -> trace -> evaluate).
+#
+# Everything here is offline and synthetic: the mock model is a fixture, the
+# tools are sandboxed/in-memory and no credentials or network are involved.
+experiment_id: lab00_setup
+task: "please add 2 and 3"
+# Deterministic mock fixture script (see agentsec.models.mock).
+mock_script: benign
+# Least-privilege policy: calculator is allowed, everything else is denied.
+policy_path: policies/examples/least_privilege_v1.yaml
+agent:
+  agent_id: agent-1
+  run_id: lab00-run-1
+  scenario: LAB-00
+  config_ref: labs/LAB-00-setup/config.yaml
+  max_steps: 6

@@ -1,0 +1,42 @@
+# Least-privilege policy (Phase 14, Task 9).
+#
+# First matching rule wins. Anything not matched falls to the default (deny),
+# so this policy grants exactly: arithmetic, and reads inside workspace/.
+default: deny
+rules:
+  - id: allow-calc
+    subject: "*"
+    tool: calculator
+    action: invoke
+    decision: allow
+    reason: "read-only helper"
+
+  - id: fs-read-workspace
+    subject: "*"
+    tool: fs_sandbox
+    action: read
+    resource: "workspace/*"
+    decision: allow
+    reason: "in-scope read"
+
+  - id: fs-deny-outside
+    subject: "*"
+    tool: fs_sandbox
+    action: "*"
+    resource: "*"
+    decision: deny
+    reason: "least privilege: out-of-scope path"
+
+  - id: db-read-requires-approval
+    subject: "*"
+    tool: mock_db
+    action: read
+    decision: require_approval
+    reason: "database reads need an explicit approval"
+
+  - id: db-writes-denied
+    subject: "*"
+    tool: mock_db
+    action: write
+    decision: deny
+    reason: "database writes are not authorized"

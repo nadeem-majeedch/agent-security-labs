@@ -1,0 +1,43 @@
+# LAB-01 - Scenario definition
+#
+# A scenario is declarative and read-only: it embeds the experiment to run (the
+# same one as config.yaml) and lists the observations expected from a correct
+# run. It never runs the agent, executes a tool or writes a trace - it only
+# compares the finished run's descriptive evaluation against `expected`.
+#
+# The `experiment` block must stay identical to config.yaml; a lab test asserts
+# this so the two files cannot drift apart.
+scenario_id: LAB-01-benign-agent
+title: Observe a benign agent
+description: |
+  A cooperative mock agent uses the sandboxed calculator once, the policy
+  allows it, the tool executes, and the agent produces a final answer.
+
+experiment:
+  experiment_id: lab01_benign
+  task: "please add 2 and 3"
+  mock_script: benign
+  policy_path: policies/examples/least_privilege_v1.yaml
+  agent:
+    agent_id: agent-1
+    run_id: lab01-run-1
+    scenario: LAB-01-benign-agent
+    config_ref: labs/LAB-01-benign-agent/config.yaml
+    max_steps: 6
+
+# Every field below is a plain comparison against a value the generic evaluator
+# already reports. There is no score and nothing is combined or ranked.
+expected:
+  agent_status: completed
+  evaluation_status: completed
+  reached_step_limit: false
+  produced_final_output: true
+  tool_requests: 1
+  requested_tools:
+    - calculator
+  policy_denials: 0
+  policy_approvals_required: 0
+  tool_executions: 1
+  tool_results_ok: 1
+  tool_results_denied: 0
+  output_contains: "5"
