@@ -1,0 +1,35 @@
+# Continuous integration: run the offline test suite and the lab self-check.
+#
+# The lab self-check re-runs every canonical lab (LAB-00 … LAB-07) through the
+# existing deterministic machinery and verifies that each still satisfies its
+# declared expectations. It is a reproducibility/teaching check, not a
+# benchmark or a security measurement.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  checks:
+    name: tests and lab self-check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install the package (with dev extras)
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Run the test suite
+        run: python -m pytest
+
+      - name: Run the lab self-check
+        run: agentsec labs check

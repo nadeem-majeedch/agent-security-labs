@@ -14,7 +14,8 @@ Exit codes:
   (a denied tool, a pending approval, a step limit or even an agent failure) are
   *results*, not CLI errors, so they keep exit code ``0``.
 * ``1`` - a configuration/usage/input problem (bad or missing config, unknown
-  mock script, unreadable or invalid trace, bad arguments).
+  mock script, unreadable or invalid trace, bad arguments), **or** one or more
+  labs failing the ``agentsec labs check`` self-check.
 * ``2`` - an orchestration failure after a valid configuration (for example a
   trace that could not be written or read).
 
@@ -27,18 +28,24 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import tempfile
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Sequence
 
 from .errors import ConfigError, EvaluationError
 from .eval import EvaluationInput, EvaluationResult, TraceEvaluator
-from .experiment import ExperimentResult, load_experiment_config
+from .experiment import ExperimentConfig, ExperimentResult, load_experiment_config
 from .mvp import build_mvp_runner
+from .selfcheck import check_labs, render_report, report_to_dict
 from .trace.writer import read_events
 
 EXIT_OK = 0
 EXIT_CONFIG = 1
 EXIT_ORCHESTRATION = 2
+#: A self-check ran but one or more labs failed their expectations. This is a
+#: "the command found a problem" outcome (1), not an orchestration failure.
+EXIT_CHECK_FAILED = EXIT_CONFIG
 
 
 class _Parser(argparse.ArgumentParser):
@@ -71,6 +78,19 @@ def build_parser() -> argparse.ArgumentParser:
     inspect.add_argument("trace", help="path to a JSONL trace")
     inspect.set_defaults(func=_cmd_inspect)
 
+    labs = sub.add_parser("labs", help="reproducibility utilities for the student labs")
+    labs_sub = labs.add_subparsers(dest="labs_command")
+    check = labs_sub.add_parser(
+        "check", help="verify every canonical lab still meets its declared expectations"
+    )
+    check.add_argument(
+        "--labs-dir",
+        default="labs",
+        help="directory containing the LAB-xx folders (default: labs)",
+    )
+    check.add_argument("--json", action="store_true", help="emit the report as JSON")
+    check.set_defaults(func=_cmd_labs_check)
+
     return parser
 
 
@@ -78,11 +98,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     """Entry point. Returns a process exit code."""
     parser = build_parser()
     args = parser.parse_args(argv)
-    if getattr(args, "command", None) is None:
+    func = getattr(args, "func", None)
+    if getattr(args, "command", None) is None or func is None:
         parser.print_help(sys.stderr)
         return EXIT_CONFIG
     try:
-        return int(args.func(args))
+        return int(func(args))
     except ConfigError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return EXIT_CONFIG
@@ -121,6 +142,36 @@ def _cmd_evaluate(args: argparse.Namespace) -> int:
     else:
         _render_evaluation(result)
     return EXIT_OK
+
+
+def _cmd_labs_check(args: argparse.Namespace) -> int:
+    """Run the offline self-check for every canonical lab.
+
+    Each lab runs through the existing deterministic MVP stack into a temporary
+    directory, and its result is compared against the lab's existing declared
+    expectations. Nothing is written under the repository's ``runs/`` output.
+    """
+    with tempfile.TemporaryDirectory(prefix="agentsec-labs-check-") as tmp:
+        report = check_labs(
+            Path(args.labs_dir), Path(tmp), run_experiment=_run_for_self_check
+        )
+
+    if args.json:
+        print(json.dumps(report_to_dict(report), indent=2))
+    else:
+        print(render_report(report))
+    return EXIT_OK if report.ok else EXIT_CHECK_FAILED
+
+
+def _run_for_self_check(config: ExperimentConfig) -> ExperimentResult:
+    """Run one lab config with the deterministic stack and a fixed clock."""
+    runner = build_mvp_runner(config, clock=_fixed_clock)
+    return runner.run(config)
+
+
+def _fixed_clock() -> datetime:
+    """A fixed clock so a self-check replay is byte-identical."""
+    return datetime(2026, 1, 1, tzinfo=timezone.utc)
 
 
 def _cmd_inspect(args: argparse.Namespace) -> int:

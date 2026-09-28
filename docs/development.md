@@ -6,18 +6,168 @@ redaction, a deterministic mock model, **sandboxed tools**, the **mediated
 ToolGateway**, the **minimal PolicyEngine**, a small **deterministic agent
 loop**, a **read-only descriptive evaluator**, a **thin one-run experiment
 runner**, a **thin command-line interface**, a **declarative scenario layer**
-and the **first seven student labs** (LAB-00 setup verification, LAB-01
-benign-agent observation, the first three adversarial observation labs
+and the **eight student labs LAB-00 … LAB-07** (LAB-00 setup verification,
+LAB-01 benign-agent observation, the first three adversarial observation labs
 (LAB-02 direct prompt injection, LAB-03 indirect prompt injection, LAB-04
-tool misuse), LAB-05, which observes the `require_approval` decision, and
-LAB-06, which observes an **authorized but unnecessary** state-changing action
-that actually executes).
+tool misuse), LAB-05, which observes the `require_approval` decision, LAB-06,
+which observes an **authorized but unnecessary** state-changing action that
+actually executes, and LAB-07, which observes an **authorized egress**: a
+task-requested, policy-allowed read followed by a policy-allowed send).
 There are
 deliberately no real model adapters and **no defences yet** - the adversarial
 labs observe behaviour only.
 
 The package makes **no research-novelty claim** anywhere; it reimplements
 established concepts for teaching and reproducible experimentation.
+
+## Research status (Phase 17 — CLOSED, research NO-GO)
+
+**Phase 17 final status (closed).**
+
+1. The Phase 17 research transition is **CLOSED**.
+2. The project remains **infrastructure/education focused**; it is not a
+   research project.
+3. The proposed direction “model exfiltration propensity under policy/task
+   variation” is **CLOSED / NOT READY**.
+4. The Phase 17 **hostile literature/full-text audit** found substantial prior
+   coverage across every area the direction touches: agentic exfiltration,
+   prompt injection and indirect prompt injection, tool misuse, excessive
+   agency, policy/authorization enforcement, data leakage, unnecessary
+   disclosure, stochastic/repeated-trial evaluation,
+   attempt-vs-authorization-vs-execution-vs-egress measurement, and
+   reproducibility methodology.
+5. **No literature-supported unresolved boundary condition survived** the
+   audit. The direction is closed because no defensible unresolved gap remained
+   — **not** because research is impossible or the project lacks value.
+6. The **real stochastic model adapter remains UNIMPLEMENTED** (there is no
+   provider adapter and no provider factory).
+7. The **small research corpus remains UNIMPLEMENTED**.
+8. **No experiment is authorized** by the current project status.
+9. **No novelty claim is made** anywhere in this repository.
+10. Research directions previously killed in **Phases 12–17 remain closed**.
+11. Any future research direction must start from a **genuinely different
+    question / boundary condition** and undergo a **fresh hostile literature
+    audit before** any implementation.
+
+**Research implementation freeze.** The following remain **unimplemented** and
+must stay so while the literature gate stands at NO-GO: the real stochastic
+model provider adapter, the provider factory, the repeated-trial research
+harness, the research corpus, research-specific metrics, research evaluator
+extensions, research trace-schema extensions, the research experiment, and the
+research benchmark.
+
+**Educational value is not a research contribution.** The literature audit
+found prior art for the audited *research direction*; it does **not** invalidate
+the educational infrastructure. The labs may intentionally teach established
+concepts, and the project may keep improving student learning, reproducibility,
+deterministic security demonstrations, mediated tool execution, policy
+enforcement, trace inspection, scenario construction, sandbox safety and
+documentation **without** making any research-novelty claim.
+
+**Current project scope.** This repository is **educational + reproducibility
+infrastructure** and a **mediated-agent harness** (the deterministic labs, the
+trace recorder, the descriptive evaluator, and the single mediated
+`ToolGateway` path). It is **not** a research benchmark, an empirical
+agent-behaviour study, a novel security mechanism, a production framework, or a
+security score/benchmark. It makes **no research-novelty claim**.
+
+**Decision.** After LAB-00 … LAB-07, the Phase 17 research transition is
+**CLOSED** with a **NO-GO for research at present**. This is not a failure of
+the project. The deterministic architecture deliberately establishes a *controlled
+and reproducible educational baseline*, and that baseline is **insufficient for
+empirical claims about stochastic agent or model behaviour**.
+
+**Why (the deterministic-fixture boundary).** Every lab drives a deterministic,
+scripted `MockModel` fixture. Consequently:
+
+- model actions are **authored** by the fixture, not produced by a model;
+- tool calls are **scripted** and outcomes are predetermined;
+- repeated runs demonstrate **determinism**, not behavioural distributions;
+- evaluator counts are **fixture outcomes**, not model propensities;
+- policy decisions are **author-controlled** (a YAML edit);
+- synthetic data and in-memory tools remove real-world dynamics.
+
+Any "result" is therefore a property of the fixtures and configuration the
+author wrote, not of an agent. No falsifiable research claim about real
+agent/model behaviour can be supported in this form.
+
+**LAB-07 boundary (Data Leakage).** LAB-07 demonstrates an **observable
+authorized egress**: a task-requested, policy-allowed read followed by a
+policy-allowed send, with the synthetic marker visible at
+`mock_email.args_redacted.body`. It does **not** demonstrate autonomous
+unintended leakage, a policy failure, a security vulnerability, or real-model
+exfiltration propensity. The transfer is explicitly requested by the task and
+deterministically scripted (`deny = 0`).
+
+**Previously audited and closed directions.** Earlier hostile audits already
+examined and rejected: repeated-run statistical correction; budget-vs-replication
+novelty; same-trajectory/different-evaluator validity; recovery; MCP/tool trust;
+runtime monitoring; cross-domain verifier independence; reproducibility as a
+novelty angle; AI-assisted performance audit; grounding/detectability anomaly;
+AI-generated tests versus fault detection; and further agent-security candidates
+(see `research/12`–`research/14` and `research/tables/`). These remain closed.
+Reopening any of them requires a **genuinely different boundary condition** *and*
+a fresh literature audit — not merely the fact that they are listed here.
+
+**Single reopening condition.** Research work may be reconsidered only after, in
+this mandatory order:
+
+1. adding a **real, stochastic model adapter**;
+2. creating a **small, controlled research corpus**;
+3. performing a **hostile literature/full-text audit before** designing any
+   substantive experiment.
+
+```
+real model adapter + small corpus
+        -> hostile literature audit
+        -> only if a genuine gap survives
+        -> controlled experiment
+```
+
+This condition does **not** guarantee a contribution, and no candidate is claimed
+to be novel. If the audit finds nothing unresolved, the project stays in
+infrastructure/education mode.
+
+**Future real-model adapter — design requirements (documented, not implemented).**
+A future adapter must preserve the existing abstractions: the `ModelAdapter`
+protocol, `ToolGateway` mediation, `PolicyEngine` mediation, the `TraceRecorder`,
+the deterministic `MockModel` as the **control condition**, offline/sandbox
+safety where possible, reproducible configuration, explicit model/provider
+metadata, model-response capture sufficient for audit, trial/repetition support,
+and a clear separation between the deterministic control and the stochastic
+treatment. Introducing a real model changes the research character: it adds
+stochasticity, model/provider dependence, cost, latency, possible network
+requirements, model/version drift, statistical design, repeated trials, corpus
+construction and further threats to validity. None of this exists today.
+
+**Future small corpus — requirements (documented, not created).** A future
+research corpus should be small initially, synthetic, controlled, versioned,
+reproducible, explicitly labeled, designed around research conditions rather
+than educational demonstrations, and accompanied by expected observations /
+ground truth where possible. It is **not** a benchmark and makes no
+representativeness claim.
+
+**Candidate status.** The considered direction “model exfiltration propensity
+under policy/task variation” is **CLOSED / NOT READY**: it requires real model
+behaviour and stochastic trials; the area is crowded; and no novelty claim has
+survived a fresh full-text audit. It may be reopened only once the real-model
+adapter and corpus exist **and** a fresh literature audit isolates an unresolved
+boundary condition.
+
+**Cross-references (historical records — not rewritten here).**
+
+- Phase 12 — research-direction audit:
+  `research/12-research-direction-selection-audit.md`
+- Phase 13–14 — lab scope, architecture and implementation blueprint:
+  `research/13-lab-scope-and-architecture.md`,
+  `research/14-implementation-blueprint.md`
+- Phase 16 — Data Leakage: `labs/LAB-07-data-leakage/`
+- Phase 17 — research transition and hostile literature audit: **this section**
+- Supporting matrices: `research/tables/*.csv`
+
+**No paper yet.** No abstract, positioning or paper is drafted. The sequence
+remains: infrastructure → observation → hypothesis → literature audit →
+experiment → final novelty audit → paper.
 
 ## Install (development)
 
@@ -39,6 +189,10 @@ The entire suite runs **offline**: no network, no API keys, no external model
 providers, no database, no Docker, no GPU. Everything is driven by the
 deterministic mock model and the sandbox tools.
 
+CI (`.github/workflows/ci.yml`) runs the suite with `python -m pytest` and then
+`agentsec labs check`, so a change that breaks a canonical lab scenario fails the
+build.
+
 ## What is implemented
 
 ```
@@ -53,6 +207,7 @@ src/agentsec/
 │   ├── calculator.py    # AST-restricted arithmetic
 │   ├── fs_sandbox.py    # in-memory virtual filesystem
 │   ├── mock_db.py       # in-memory synthetic database
+│   ├── mock_email.py    # in-memory synthetic egress sink (no network/SMTP)
 │   ├── gateway.py       # ToolGateway (single mediated path)
 │   └── factory.py       # build tools / build a gateway
 ├── policy/
@@ -80,7 +235,7 @@ src/agentsec/
     ├── recorder.py      # TraceRecorder (stamps header, redacts, validates)
     └── writer.py        # append-only JSONL I/O
 schemas/trace/trace_event.v1.schema.json   # versioned trace contract
-policies/examples/                          # deny_by_default, least_privilege_v1, lab06_excessive_agency_v1
+policies/examples/                          # deny_by_default, least_privilege_v1, lab06_excessive_agency_v1, lab07_data_leakage_v1
 labs/
 ├── LAB-00-setup/                # README.md, config.yaml (environment verification)
 ├── LAB-01-benign-agent/         # README.md, config.yaml, scenario.yaml
@@ -88,7 +243,8 @@ labs/
 ├── LAB-03-indirect-prompt-injection/ # README.md, config.yaml, scenario.yaml
 ├── LAB-04-tool-misuse/               # README.md, config.yaml, scenario.yaml
 ├── LAB-05-require-approval/          # README.md, config.yaml, scenario.yaml
-└── LAB-06-excessive-agency/          # README.md, config.yaml, scenario.yaml
+├── LAB-06-excessive-agency/          # README.md, config.yaml, scenario.yaml
+└── LAB-07-data-leakage/              # README.md, config.yaml, scenario.yaml
 ```
 
 ## Trace schema
@@ -134,7 +290,14 @@ adds one small fixture, `approval_read`: a legitimate `mock_db` read that the
 existing `db-read-requires-approval` policy rule holds for approval. LAB-06
 reuses the existing `excessive_agency` fixture directly: no injection and no
 misuse, just a state-changing `mock_db` write that the lab's own policy allows,
-so the tool executes and leaves an observable (synthetic) side effect.
+so the tool executes and leaves an observable (synthetic) side effect. LAB-07
+adds one more fixture, `data_leakage`: a task-requested `mock_db` read of a
+synthetic record followed by a `mock_email` send to a reserved RFC-2606
+address. Nothing is injected and nothing is out of scope; both operations are
+policy-allowed, so the synthetic record crosses the egress boundary. The
+record's `sensitive_demo_value` is a deliberately non-secret marker
+(`SYNTHETIC-DEMO-DISCLOSURE-A1`) that matches none of the redactor's patterns,
+so it stays observable in the trace; secret-shaped values are still redacted.
 
 ## Tools
 
@@ -164,7 +327,16 @@ independently testable. Concrete tools are built **only** through
   `ToolExecutionError` unless the tool is built writable. Each instance holds
   its own copy of the synthetic seed. `build_tools(..., sandbox_db_writes=True)`
   builds it writable for a lab that needs to observe a synthetic state change;
-  nothing else changes and every other lab stays read-only.
+  `build_tools(..., sandbox_db_seed={...})` instead replaces its synthetic seed
+  for that instance with per-lab fixture data (the shared defaults are
+  untouched). Nothing else changes and every other lab stays read-only.
+* `mock_email` — an **entirely in-memory** synthetic egress sink (no network, no
+  SMTP, no filesystem, no subprocess). Its single action is `send`, whose
+  `resource` is the recipient; the input schema requires non-empty `to`,
+  `subject` and `body` (body capped at 4096 characters) and the output records
+  `sent`, `recipient` and a per-instance `message_id`. Messages are held in an
+  in-memory outbox, so a lab can observe that an egress *was requested and
+  permitted* without anything leaving the process.
 
 **Sandbox boundary.** Tools enforce *containment* (a request cannot leave the
 sandbox). Which resources *within* the sandbox an agent may touch is a **policy**
@@ -289,10 +461,14 @@ parallel runs, sweeps or retries.
 the existing `AgentConfig`, an optional expected `trace_path`, an optional
 `policy_path`, the `mock_script` name, an optional `sandbox_files` mapping
 that seeds the in-memory `fs_sandbox` workspace with synthetic fixture content
-(memory only; it never touches the host disk), and a `sandbox_db_writes` flag
+(memory only; it never touches the host disk), a `sandbox_db_writes` flag
 (default `false`) that builds the in-memory `mock_db` writable so a lab can
-observe a synthetic state change. It has no fields for capabilities
-that do not exist (no temperature, seed, retries, parallelism or credentials).
+observe a synthetic state change, and an optional `sandbox_db_seed` mapping
+(default empty) that replaces the in-memory `mock_db` synthetic seed, by table
+name, for one run only (still memory-only and per-instance; the shared defaults
+are untouched, so every other lab keeps them). It has no fields for
+capabilities that do not exist (no temperature, seed, retries, parallelism or
+credentials).
 `load_experiment_config(path)` parses YAML with the same strict behaviour as the
 policy loader and raises `ConfigError` on a malformed document.
 
@@ -501,9 +677,10 @@ configuration and interprets an already-produced `ExperimentResult`.
 
 ## Labs
 
-The first student labs live under `labs/`. They add **no new runtime code**: a
-lab is a configuration to run plus a scenario that declares the observations a
-correct run should produce.
+The student labs live under `labs/` and run **LAB-00 … LAB-07**; the current MVP
+lab sequence **ends at LAB-07** (there is deliberately no LAB-08). They add **no
+new runtime code**: a lab is a configuration to run plus a scenario that
+declares the observations a correct run should produce.
 
 | Lab | Purpose | Files |
 |---|---|---|
@@ -514,6 +691,7 @@ correct run should produce.
 | `LAB-04-tool-misuse` | Observe a **legitimate tool requested with an out-of-scope argument**; the policy denies it, so the tool never executes. | `README.md`, `config.yaml`, `scenario.yaml` |
 | `LAB-05-require-approval` | Observe the third policy decision: a legitimate request answered with **`require_approval`**, held pending, so the tool does not execute without authorization. | `README.md`, `config.yaml`, `scenario.yaml` |
 | `LAB-06-excessive-agency` | Observe an **authorized but unnecessary** state-changing action: the policy says `allow`, the tool **executes**, and a synthetic side effect is recorded - authorization does not establish necessity. | `README.md`, `config.yaml`, `scenario.yaml` |
+| `LAB-07-data-leakage` | Observe an **authorized egress**: a task-requested, policy-allowed read of a synthetic record followed by a policy-allowed `mock_email` send - every operation is permitted, yet the synthetic content crosses a data boundary. An educational demonstration of observable, authorized, **synthetic** egress: **not** real exfiltration, an autonomous leak, a vulnerability demo, a propensity measurement or a security benchmark. | `README.md`, `config.yaml`, `scenario.yaml` |
 
 `config.yaml` is an ordinary `ExperimentConfig` run with
 `agentsec run <config.yaml>`. `scenario.yaml` is a `ScenarioDef`: it embeds the
@@ -529,7 +707,12 @@ separate framework. Students read the learning objectives, run the commands and
 answer the questions in the lab README; the scenario test supplies the
 `passed` / `failed` verdict.
 
-The labs make **no research-novelty claim** and are not a benchmark.
+The labs make **no research-novelty claim** and are not a benchmark. LAB-07 in
+particular is an educational demonstration of observable, authorized, synthetic
+egress/data-boundary behaviour - it is **not** autonomous real-world leakage, a
+vulnerability demonstration, real exfiltration, a model-propensity measurement
+or a security benchmark. Teaching established concepts is the point; it is not a
+research contribution (see the Phase 17 section above).
 
 ## Command-line interface
 
@@ -544,6 +727,7 @@ agentsec run configs/examples/benign.yaml --json   # machine-readable result
 agentsec evaluate trace.jsonl                       # read-only trace analysis
 agentsec evaluate trace.jsonl --json
 agentsec inspect trace.jsonl                        # short trace summary
+agentsec labs check                                 # verify every canonical lab
 ```
 
 `agentsec run` reads the configuration with `load_experiment_config`, wires the
@@ -558,12 +742,21 @@ existing `TraceEvaluator`; it never reruns the agent, executes a tool or mutates
 the trace. `agentsec inspect` prints a short textual summary (run id, event
 count, event sequence and parent links) - it is not a viewer.
 
+`agentsec labs check` re-runs every canonical lab (`labs/LAB-00` … `labs/LAB-07`)
+through the same deterministic MVP stack into a **temporary** directory and
+compares each result against the lab's own declared expectations (its
+`scenario.yaml` `expected` observations; LAB-00 has no scenario and is checked as
+a setup smoke test). It is an offline reproducibility/teaching check: it adds no
+metric, score, ranking or security claim, writes nothing into `runs/`, and prints
+a per-lab PASS/FAIL summary with a non-zero exit code if any lab fails. See
+`labs/README.md` for the description aimed at students and instructors.
+
 ### Exit codes
 
 | Code | Meaning |
 |---|---|
 | `0` | the command completed and produced a result. Experimental outcomes - a denied tool, a pending approval, a step limit, even an agent failure - are *results*, not CLI errors, so they keep `0`. |
-| `1` | a configuration/usage/input problem (bad or missing config, unknown mock script, unreadable or invalid trace, bad arguments). |
+| `1` | a configuration/usage/input problem (bad or missing config, unknown mock script, unreadable or invalid trace, bad arguments), or one or more labs failing `agentsec labs check`. |
 | `2` | an orchestration failure after a valid configuration (for example a trace that could not be read or written). |
 
 ### Packaging
