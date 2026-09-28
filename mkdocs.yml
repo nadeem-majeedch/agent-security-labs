@@ -5,6 +5,8 @@
 # `config.yaml` / `scenario.yaml` files are excluded from the site.
 #
 # Build locally with:  py -m pip install -e ".[docs]"  &&  py -m mkdocs build
+# CI (`.github/workflows/docs.yml`) builds this site strictly and publishes it to
+# GitHub Pages on pushes to `main`.
 site_name: Agent Security Labs
 site_description: >-
   Offline, deterministic AI-agent security labs (LAB-00 … LAB-07) for learning
