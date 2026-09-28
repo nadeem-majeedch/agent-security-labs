@@ -200,43 +200,8 @@ without looking at the source, that lab is complete. Move on to the next one.
 
 ## Lab self-check
 
-One command verifies that the labs still behave as documented. It re-runs
-**LAB-00 … LAB-07** through the existing deterministic machinery and checks each
-result against the lab's own declared expectations (`scenario.yaml` →
-`expected`). LAB-00 is a setup smoke test and ships no `scenario.yaml`, so it is
-checked only for a run that completes and produces a final answer.
-
-```bash
-PYTHONPATH=src py -m agentsec labs check
-```
-
-```
-LAB SELF-CHECK
-==============
-
-LAB-00  PASS
-LAB-01  PASS
-LAB-02  PASS
-LAB-03  PASS
-LAB-04  PASS
-LAB-05  PASS
-LAB-06  PASS
-LAB-07  PASS
-
-Result: 8/8 labs passed
-```
-
-- It writes to a **temporary** directory, so it never touches `runs/` and never
-  changes the lab definitions.
-- It is fully **offline**: no network, no API keys, no model provider, no
-  database.
-- Add `--json` for a machine-readable report, or `--labs-dir <path>` to point at
-  a different labs directory.
-- If a lab fails it prints a short reason and the command returns a non-zero
-  exit code.
-
-This is a **reproducibility / teaching check**: it confirms that the
-deterministic educational scenarios still produce the observations they declare.
-It is **not** a benchmark or a security score, and it says nothing about whether
-the system is "secure", whether policies are "effective", whether any attack
-"succeeds", or how a real model behaves.
+One command verifies that the labs still behave as documented: it re-runs
+**LAB-00 … LAB-07** against their declared expectations and prints a PASS/FAIL
+summary per lab (returning a non-zero exit code if any lab fails). See
+[`LOCAL-VERIFICATION.md`](LOCAL-VERIFICATION.md) for what it checks, how to run
+it, and what it deliberately does **not** claim.

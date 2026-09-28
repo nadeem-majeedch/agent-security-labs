@@ -17,6 +17,9 @@ runs/
 traces/*.jsonl
 !traces/examples/
 
+# Docs site build output
+site/
+
 # Local secrets / environment
 .env
 *.local

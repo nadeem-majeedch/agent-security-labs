@@ -21,6 +21,8 @@ dependencies = [
 [project.optional-dependencies]
 dev = ["pytest>=7.4"]
 live = ["httpx>=0.27"]
+# Documentation site (optional). Not required to run the labs or the tests.
+docs = ["mkdocs-material>=9"]
 
 [project.scripts]
 agentsec = "agentsec.cli:main"

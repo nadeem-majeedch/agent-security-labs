@@ -1,0 +1,49 @@
+# Documentation site for the Agent Security Labs.
+#
+# The lab documentation already lives in `labs/`, so that directory is the
+# MkDocs `docs_dir` — there is no duplicated copy to keep in sync. Lab
+# `config.yaml` / `scenario.yaml` files are excluded from the site.
+#
+# Build locally with:  py -m pip install -e ".[docs]"  &&  py -m mkdocs build
+site_name: Agent Security Labs
+site_description: >-
+  Offline, deterministic AI-agent security labs (LAB-00 … LAB-07) for learning
+  by reading traces.
+
+docs_dir: labs
+site_dir: site
+
+theme:
+  name: material
+
+markdown_extensions:
+  - tables
+  - toc:
+      permalink: true
+
+# The instructor-only answer key is intentionally not in the navigation, but is
+# still built so the Instructor Guide's link to it resolves.
+validation:
+  nav:
+    omitted_files: ignore
+
+exclude_docs: |
+  **/*.yaml
+
+nav:
+  - Getting Started: GETTING-STARTED.md
+  - Lab Map:
+      - Overview: README.md
+      - LAB-00 Setup: LAB-00-setup/README.md
+      - LAB-01 Benign: LAB-01-benign-agent/README.md
+      - LAB-02 Direct Injection: LAB-02-direct-prompt-injection/README.md
+      - LAB-03 Indirect Injection: LAB-03-indirect-prompt-injection/README.md
+      - LAB-04 Tool Misuse: LAB-04-tool-misuse/README.md
+      - LAB-05 Require Approval: LAB-05-require-approval/README.md
+      - LAB-06 Excessive Agency: LAB-06-excessive-agency/README.md
+      - LAB-07 Data Leakage: LAB-07-data-leakage/README.md
+  - Understanding Traces: TRACE-WALKTHROUGHS.md
+  - Practice: TRACE-READING-EXERCISES.md
+  - Instructor Guide: INSTRUCTOR-GUIDE.md
+  - Local Verification:
+      - agentsec labs check: LOCAL-VERIFICATION.md
