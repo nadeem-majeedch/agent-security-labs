@@ -8,7 +8,7 @@ version = "0.0.1"
 description = "AI Agent Security Lab - educational, reproducible agent-security infrastructure (Phase A skeleton)."
 readme = "docs/development.md"
 requires-python = ">=3.11"
-license = { text = "TBD" }
+license = { text = "MIT" }
 # Core runtime dependencies (Phase 14 dependency audit, Task 22).
 # PyYAML is required by the policy YAML loader; httpx is only pulled in when a
 # live provider adapter is used.

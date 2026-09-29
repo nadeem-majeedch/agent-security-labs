@@ -1,4 +1,15 @@
-# Continuous integration: run the offline test suite and the lab self-check.
+# Continuous integration: check the declared licence metadata, run the offline
+# test suite and run the lab self-check.
+#
+# The licence check re-reads LICENSE, LICENSE-DATA, pyproject.toml, CITATION.cff
+# and README.md and verifies that they still agree about which licence applies
+# to what. It then checks licensing coverage: every file present must be
+# accounted for by an entry in licensing/manifest.toml, so a newly added file
+# cannot enter the repository without a recorded licensing treatment. It
+# compares the repository's own declarations and its own manifest; it does not
+# determine ownership, and it does not decide the licence of any third-party
+# material. It uses only the standard library, so it runs before the install
+# and fails fast.
 #
 # The lab self-check re-runs every canonical lab (LAB-00 … LAB-07) through the
 # existing deterministic machinery and verifies that each still satisfies its
@@ -22,6 +33,9 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
+      - name: Check the licence metadata and coverage
+        run: python scripts/check_licensing.py
 
       - name: Install the package (with dev extras)
         run: |

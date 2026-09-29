@@ -1,0 +1,189 @@
+# Licensing coverage manifest
+# ==========================================================================
+#
+# This file records the licensing treatment of every file in this repository.
+# `scripts/check_licensing.py` reads it and fails when a file is present that
+# no entry below accounts for, so a new file cannot enter the project without
+# somebody consciously deciding what its licensing status is.
+#
+# The repository has a deliberately narrow boundary — see README.md
+# ("Licensing") and LICENSE-DATA for the authoritative statement, and LICENSE
+# for the MIT text that applies to the software. This manifest does not widen
+# or narrow that boundary. It only makes it *explicit and complete*: each
+# pattern below is an auditable decision, and nothing is inferred from a file
+# extension.
+#
+# Status vocabulary
+# -----------------
+#
+#   mit               Software and machine-readable configuration. Covered by
+#                     LICENSE (MIT).
+#   cc-by             Repository-authored Markdown. Covered by LICENSE-DATA
+#                     (CC BY 4.0).
+#   excluded          Governed by neither grant: third-party or otherwise
+#                     not this project's material, or an instrument that is
+#                     not itself content under a grant. A non-empty `reason`
+#                     is required, because an exclusion is a judgement call.
+#   unlicensed        Deliberately left without a licence decision. A
+#                     non-empty `reason` is required; recording the file
+#                     without one is an error. Listed files are reported on
+#                     every run so the state cannot be forgotten.
+#   not-distributed   Generated, runtime or local-only material. It is not
+#                     distributable content and is not reviewed for licensing,
+#                     so the coverage check does not look inside it at all.
+#                     This mirrors the "Lab runtime output", tooling-cache and
+#                     "Docs site build output" sections of .gitignore; keep the
+#                     two in step when a new generated directory appears.
+#
+# Pattern syntax
+# --------------
+#
+# Patterns match repository-relative paths written with forward slashes:
+#
+#   *    matches any run of characters except "/"
+#   **   matches any run of characters including "/"
+#   dir/ a trailing slash means "this directory and everything beneath it"
+#
+# An exact path (for example "README.md") matches only that path. Every
+# pattern under a coverage status must match at least one file, so a stale
+# entry is reported rather than silently tolerated. `not-distributed` patterns
+# are exempt, because a clean checkout legitimately has no build output.
+#
+# Changing a file's licensing treatment is a decision about the file, not
+# about this file: make the decision, then record it here.
+
+schema-version = 1
+
+
+# --------------------------------------------------------------------------
+# MIT — software and machine-readable configuration
+# --------------------------------------------------------------------------
+# What the harness parses. Mirrors LICENSE-DATA section 2.
+
+[[coverage]]
+status = "mit"
+paths = [
+  # Root build, packaging and repository configuration.
+  ".gitignore",
+  "CITATION.cff",
+  "LICENSE",
+  "mkdocs.yml",
+  "pyproject.toml",
+
+  # This manifest is itself machine-readable configuration.
+  "licensing/**",
+
+  # Build, packaging and CI configuration.
+  ".github/**",
+
+  # The agentsec package, the test suite and the repository tooling.
+  "src/**",
+  "tests/**",
+  "scripts/**",
+
+  # Machine-readable configuration and schemas.
+  "configs/**",
+  "policies/**",
+  "schemas/**",
+
+  # Lab configuration and declarative scenarios (the labs' instructions are
+  # Markdown and are covered by CC BY 4.0 below).
+  "labs/**.yaml",
+
+  # Machine-readable research tables. Listed exactly as LICENSE-DATA section 2
+  # writes it, so a table in a new subdirectory is a decision, not a default.
+  "research/tables/*.csv",
+]
+
+
+# --------------------------------------------------------------------------
+# CC BY 4.0 — repository-authored Markdown
+# --------------------------------------------------------------------------
+# What a person reads. Mirrors LICENSE-DATA section 1.
+
+[[coverage]]
+status = "cc-by"
+paths = [
+  "README.md",
+  "docs/**.md",
+  "labs/**.md",
+  "research/**.md",
+]
+
+
+# --------------------------------------------------------------------------
+# Excluded — governed by neither grant
+# --------------------------------------------------------------------------
+
+# The content-licence instrument itself. LICENSE-DATA section 2 places this
+# file outside its own scope, and the legal code it embeds is Creative
+# Commons' text, dedicated to the public domain under the CC0 Public Domain
+# Dedication. The CC BY 4.0 grant in this file therefore applies to the
+# material it describes, not to the file.
+[[coverage]]
+status = "excluded"
+reason = "the content-licence instrument itself; LICENSE-DATA section 2 places it outside its own scope, and the embedded CC BY 4.0 legal code is Creative Commons' CC0-dedicated text"
+paths = [
+  "LICENSE-DATA",
+]
+
+# Local tooling metadata. It is tracked, so it does enter a clone, but
+# LICENSE-DATA section 2 records it as neither project content nor third-party
+# material, and it is covered by neither grant. Recorded here rather than
+# deleted, so the decision is visible instead of accidental. Additional local
+# state under .freebuff/ should be added to `not-distributed` when it appears.
+[[coverage]]
+status = "excluded"
+reason = "tracked local tooling metadata, outside both grants (LICENSE-DATA section 2): not project content and not third-party material"
+paths = [
+  ".freebuff/project-id",
+]
+
+
+# --------------------------------------------------------------------------
+# Not distributed — generated, runtime and local-only material
+# --------------------------------------------------------------------------
+# Kept in step with .gitignore. The coverage check does not look inside these
+# paths, so nothing here is a licensing statement about their contents.
+
+[[coverage]]
+status = "not-distributed"
+paths = [
+  # Lab runtime output.
+  "runs/",
+  "traces/*.jsonl",
+
+  # Documentation site build output.
+  "site/",
+
+  # Tooling and bytecode caches.
+  ".mypy_cache/",
+  ".pytest_cache/",
+  ".ruff_cache/",
+  "__pycache__/",
+  "**/__pycache__/",
+
+  # Virtual environments and packaging output.
+  ".venv/",
+  "venv/",
+  "build/",
+  "dist/",
+  "**/*.egg-info/",
+
+  # Local secrets and environment overrides.
+  ".env",
+  "*.local",
+]
+
+
+# --------------------------------------------------------------------------
+# Unlicensed — deliberately undecided
+# --------------------------------------------------------------------------
+# No file is currently recorded as unlicensed. To record one, add an entry:
+#
+#   [[coverage]]
+#   status = "unlicensed"
+#   reason = "why this file is left undecided and what must be settled"
+#   paths = ["path/to/file"]
+#
+# The `reason` is required, and every run reports the files it lists.

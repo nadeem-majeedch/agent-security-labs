@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata below."
+title: "Agent Security Labs"
+type: software
+version: "0.0.1"
+abstract: >-
+  Agent Security Labs is an offline, deterministic, mediated-agent security
+  laboratory for learning AI-agent security by reading traces. Eight educational
+  labs (LAB-00 through LAB-07) run a scripted model fixture against in-memory
+  tools through a single mediated tool gateway, and write a JSONL trace in which
+  the request, the policy decision, the execution and the result are separate,
+  causally linked events. It is educational and reproducibility infrastructure:
+  it is not a benchmark, and it makes no research claim.
+authors:
+  - family-names: "Majeed"
+    given-names: "Muhammad Nadeem"
+    email: "98729698+nadeem-majeedch@users.noreply.github.com"
+repository-code: "https://github.com/nadeem-majeedch/agent-security-labs"
+url: "https://nadeem-majeedch.github.io/agent-security-labs/"
+license: MIT
+keywords:
+  - "AI agent security"
+  - "LLM security"
+  - "cybersecurity education"
+  - "trace reading"
+  - "deterministic simulation"
+  - "reproducibility"

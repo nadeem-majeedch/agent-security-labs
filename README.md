@@ -218,13 +218,16 @@ Re-run locally at this revision:
 
 | Check | Command | Result |
 | --- | --- | --- |
-| Test suite | `PYTHONPATH=src py -m pytest` | **694 tests pass** (exit 0) |
+| Licence metadata and file coverage | `py scripts/check_licensing.py` | **9/9 checks pass** (exit 0) |
+| Test suite | `PYTHONPATH=src py -m pytest` | **719 tests pass** (exit 0) |
 | Lab self-check | `PYTHONPATH=src py -m agentsec labs check` | **8/8 labs pass** (exit 0) |
 | Documentation build | `py -m mkdocs build --strict` | **builds with no warnings or errors** (exit 0) |
 
-[`ci.yml`](.github/workflows/ci.yml) runs the test suite and then the lab
-self-check on every push and pull request, so a change that breaks a canonical
-lab scenario fails the build.
+[`ci.yml`](.github/workflows/ci.yml) checks the licence metadata first, then runs
+the test suite and the lab self-check, on every push and pull request — so a
+change that breaks a canonical lab scenario, that lets the licensing
+declarations drift apart, or that adds a file with no recorded licensing
+treatment, fails the build.
 
 ---
 
@@ -273,9 +276,63 @@ authorised here.
 - **Requirements:** Python 3.11+; three runtime dependencies (`pydantic`,
   `jsonschema`, `PyYAML`). `httpx` is declared as an optional extra for a future
   live adapter that **does not exist**; MkDocs is an optional `docs` extra.
-- **No licence has been assigned yet.** [`pyproject.toml`](pyproject.toml)
-  records `license = "TBD"`, and no `LICENSE` or `CITATION.cff` file exists yet —
-  so this repository carries no granted licence at present.
+- **Licences: MIT for the software, CC BY 4.0 for the content.** The same
+  software licence is declared in [`pyproject.toml`](pyproject.toml) and
+  [`CITATION.cff`](CITATION.cff). See [Licensing](#licensing) for the exact
+  boundary.
 - **No LAB-08**, deliberately; the lab sequence ends at LAB-07.
 - **No live model provider**, no network functionality and no defences are
   included: the adversarial labs observe behaviour only.
+
+---
+
+## Licensing
+
+Two licences, split along one line: **what the harness parses is MIT; what a
+person reads is CC BY 4.0.**
+
+| Material | Licence | Licence file |
+| --- | --- | --- |
+| **Software** — `src/`, `tests/`, `scripts/` | MIT | [`LICENSE`](LICENSE) |
+| **Machine-readable configuration** — `policies/`, `configs/`, `labs/**/*.yaml`, `schemas/`, `research/tables/*.csv`, `mkdocs.yml`, `pyproject.toml`, `.github/` | MIT | [`LICENSE`](LICENSE) |
+| **Documentation and educational text** — `README.md`, `docs/`, `labs/**/*.md`, `research/**/*.md` | CC BY 4.0 | [`LICENSE-DATA`](LICENSE-DATA) |
+
+So the labs' YAML is MIT while the instructions that explain them are CC BY 4.0.
+You may reuse and adapt the exercises, walkthroughs and instructor material —
+including in your own teaching — provided you give attribution and indicate what
+you changed. [`LICENSE-DATA`](LICENSE-DATA) carries the exact scope notice, a
+ready-made attribution string and the full text of the licence.
+
+Third-party material cited or quoted in `research/` is covered by **neither**
+grant: titles, author names, venues, DOIs and quotations remain the property of
+their respective owners and are included for citation and identification only.
+No third-party image, figure, dataset or lengthy excerpt is redistributed here.
+
+CI keeps these declarations from drifting apart.
+[`scripts/check_licensing.py`](scripts/check_licensing.py) re-reads `LICENSE`,
+`LICENSE-DATA`, `pyproject.toml`, `CITATION.cff` and this README, and fails the
+build if they stop agreeing about which licence applies to what.
+
+It then checks **coverage**. Every path in this repository is recorded
+explicitly in [`licensing/manifest.toml`](licensing/manifest.toml) as MIT,
+CC BY 4.0, outside both grants, deliberately undecided, or generated material
+that is not distributable content. A file that no entry accounts for — a new
+one, typically — fails the build until somebody records what it is, so
+licensing is a decision that has to be made rather than a side effect of a file
+extension. The checker compares the repository's own declarations: it does
+**not** establish ownership, and it does not determine the licence of any
+third-party material.
+
+---
+
+## Citation
+
+Machine-readable citation metadata is provided in [`CITATION.cff`](CITATION.cff).
+If you reference this repository, please cite it as:
+
+> Majeed, M. N. (2026). *Agent Security Labs* (version 0.0.1) [Computer software].
+> MIT Licence. <https://github.com/nadeem-majeedch/agent-security-labs>
+
+This citation identifies the **software** only. It does not assert that a study
+has been conducted, that any learning outcome has been measured, or that any
+result has been published.
