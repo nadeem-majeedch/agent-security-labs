@@ -1,114 +1,281 @@
-# AgentSec Lab
+# Agent Security Labs
 
-Working project name for a planned empirical study on the security evaluation of LLM-based AI agents.
+**Offline, deterministic AI-agent security labs — learn by reading the trace.**
 
-**Working research theme:** reproducible, adaptive, multi-model security evaluation of LLM-based agents, with explicit measurement of security, utility and operational cost.
+📖 **Live documentation site:** <https://nadeem-majeedch.github.io/agent-security-labs/>
 
----
+Eight small labs, **LAB-00 … LAB-07**. Each one runs a single deterministic
+experiment, writes a **trace** (one JSON event per line), and lets you read that
+trace and answer one question with evidence:
 
-## Status of this repository
+> **"What can I actually observe in the trace?"**
 
-This repository currently contains **one research-discovery deliverable only**. It contains **no paper**.
-
-Not present, and intentionally not written: abstract, introduction, methodology, results, conclusion, or any claim of novelty. Those come after the direction is chosen and the experiments are run.
-
-| Stage | State |
-|---|---|
-| Research landscape and gap analysis | **Complete** (draft v0.1) |
-| Full-text reading of the priority papers | Not started |
-| Systematic database search | Not started |
-| Model configuration verification | Not started |
-| Direction selection and pre-registration | Not started |
-| Implementation, experiments, paper | Not started |
+There is deliberately **no LAB-08**. These labs are **educational
+infrastructure**: they make **no research claim**, they are **not a benchmark**,
+and the model they run against is a **deterministic fixture**, not a real LLM.
 
 ---
 
-## What is in here
+## What Agent Security Labs is
 
+An **offline, deterministic, mediated-agent security laboratory**.
+
+`agentsec` runs a small agent loop against a **scripted model fixture** and a set
+of **in-memory tools**. Every tool call passes through a single mediated path —
+the **tool gateway** — which validates the arguments, records the request,
+records an **explicit policy decision**, and only then either executes the tool
+or refuses it. Each run writes a **JSONL trace** that you can inspect, evaluate
+and reason about without re-running anything.
+
+Nothing here touches a real system: the filesystem, database and mail sink are
+in-memory, and there is no network, no API key and no model provider involved.
+
+**Current status:** an existing, working artefact — not a plan. The package, the
+eight labs, the test suite, the offline self-check, the documentation site and
+the CI workflows are all implemented and verified at this revision.
+
+---
+
+## What you can learn
+
+Read a trace left to right as **one request's path** — what was asked for, what
+policy decided, whether the tool really ran, and whether anything changed:
+
+| Stage | Event | What it does **not** prove |
+| --- | --- | --- |
+| Model turn | `model_request` / `model_response` | that a tool was requested |
+| **Requested** | `tool_requested` | that the tool ran |
+| **Decided** | `policy_decision` (`allow` / `deny` / `require_approval`) | that the tool ran |
+| **Executed** | `tool_executed` | *(nothing — this is the evidence that it ran)* |
+| **Result** | `tool_result` (`ok`, `denied`, `pending_approval`, …) | that anything changed |
+| Change | `tool_result.side_effects` | that anything real was touched |
+
+Every event links to the one before it (`parent_event_id`), so the whole chain —
+**task → response → request → policy → execution → result → answer** — is
+reconstructable from the trace alone.
+
+### Eight distinctions to carry across every lab
+
+These are the ideas the labs are built to make visible. They are teaching
+distinctions, not measurements.
+
+1. A **model response** is not the same as a **tool request**.
+2. A **tool request** is not proof that the tool **executed**.
+3. The **policy decision** happens **before** execution.
+4. A **`deny`** decision prevents execution.
+5. A **`require_approval`** decision does **not** mean execution happened.
+6. An **`allow`** followed by a **`tool_executed`** event means the tool
+   **really ran**.
+7. A successful execution may produce a **synthetic side effect**.
+8. A **`tool_result`** can exist for a denied request **even though no
+   `tool_executed` event exists** (same for a pending-approval request).
+
+Two more that LAB-07 makes concrete:
+
+9. LAB-07 shows **authorized, synthetic egress** — it is **not** real-world
+   exfiltration and does **not** demonstrate a vulnerability.
+10. Because the model is a **deterministic fixture**, what you observe is the
+    **mechanics of a security boundary**, not the behaviour of a real model.
+
+The same columns are laid out per lab in the
+[observables matrix](labs/README.md#the-observables-matrix).
+
+---
+
+## What is included
+
+| Area | Contents |
+| --- | --- |
+| [`src/agentsec/`](src/agentsec) | the `agentsec` package: agent loop, tool gateway, policy engine, trace schema/recorder/redaction, descriptive evaluator, declarative scenarios, experiment runner, composition root and CLI |
+| [`labs/`](labs) | **LAB-00 … LAB-07** — each a `README.md` plus `config.yaml` (and a `scenario.yaml` for LAB-01 … LAB-07) |
+| [`labs/TRACE-WALKTHROUGHS.md`](labs/TRACE-WALKTHROUGHS.md) | an event-by-event walkthrough of the trace each lab produces |
+| [`labs/TRACE-READING-EXERCISES.md`](labs/TRACE-READING-EXERCISES.md) | 36 practice exercises (sets A–G) plus a final challenge, with an instructor-only [answer key](labs/TRACE-READING-EXERCISES-ANSWER-KEY.md) |
+| [`policies/examples/`](policies/examples) | four example policies (`deny_by_default`, `least_privilege_v1`, and one per-lab policy each for LAB-06 and LAB-07) |
+| [`schemas/trace/`](schemas/trace) | the versioned trace-event JSON Schema (`v1`), generated from the models with a drift test |
+| [`tests/`](tests) | the offline test suite (see [verification status](#verification-status)) |
+| [`mkdocs.yml`](mkdocs.yml) | the MkDocs configuration for the published documentation site |
+| [`.github/workflows/`](.github/workflows) | `ci.yml` (tests + lab self-check) and `docs.yml` (strict build + GitHub Pages) |
+
+---
+
+## How it works
+
+| Component | Role |
+| --- | --- |
+| **Agent loop** ([`agent.py`](src/agentsec/agent.py)) | the smallest deterministic model/tool loop; it knows only a `ModelAdapter` and a `ToolGateway` — it never executes a tool or evaluates a policy |
+| **Tool gateway** ([`tools/gateway.py`](src/agentsec/tools/gateway.py)) | the **single mediated path** for every tool call: validate → record request → policy decision → execute or refuse → record result |
+| **Policy engine** ([`policy/`](src/agentsec/policy)) | a deliberately small engine: a flat, ordered rule list plus a default, first match wins, three decisions only — `allow`, `deny`, `require_approval` |
+| **Tools** ([`tools/`](src/agentsec/tools)) | four in-memory tools: `calculator` (AST-restricted arithmetic), `fs_sandbox` (virtual filesystem), `mock_db` (synthetic database), `mock_email` (in-memory egress sink) |
+| **Deterministic fixture** ([`models/mock.py`](src/agentsec/models/mock.py)) | a scripted, clock-free, RNG-free model whose response is a pure function of the messages and the script — a **test fixture, not an LLM** |
+| **Trace** ([`trace/`](src/agentsec/trace)) | a versioned 12-event schema, an append-only JSONL recorder with redaction-before-write, and a validator |
+| **Descriptive evaluator** ([`eval/builtin.py`](src/agentsec/eval/builtin.py)) | read-only counts, decisions, tool-result outcomes, flags and warnings — it computes **no score** and re-runs nothing |
+| **Declarative scenarios** ([`scenarios/`](src/agentsec/scenarios)) | each lab declares its expected observations; the scenario interprets an already-finished run and reports `passed` / `failed` / `inconclusive` |
+| **CLI** ([`cli.py`](src/agentsec/cli.py)) | a thin interface: `run`, `inspect`, `evaluate`, `labs check` — it contains no execution logic |
+
+The full architecture reference is in [`docs/development.md`](docs/development.md).
+
+---
+
+## Reproducibility
+
+What the artefact supports, precisely:
+
+- **Deterministic fixture.** The model is scripted: identical inputs produce the
+  same responses, and it consults no clock or RNG (`latency_ms` is always `None`).
+  It reports that it supports neither `temperature` nor `seed`, and refuses
+  either parameter rather than pretending to honour it.
+- **Injectable clock.** The trace recorder accepts a clock, and `event_id` is
+  `ev-<seq>`, so a run replayed with a **fixed clock** is byte-identical. The
+  test suite and the `labs check` self-check both inject that fixed clock.
+- **Ordinary runs use the real clock.** A plain `agentsec run` does not inject a
+  clock, so two default runs of the same configuration have **different
+  `timestamp` values** — everything else (event order, ids and content hashes) is
+  reproducible.
+- **Offline operation.** No network, no credentials, no provider, no database
+  server, no Docker and no GPU. In-memory tools enforce containment: a request
+  cannot leave the sandbox.
+- **One run, one trace.** The runner orchestrates exactly one run — no retries,
+  no batches, no parallelism — and validates that configuration, agent and
+  recorder agree, so one run writes one coherent trace.
+- **Automated tests and an offline self-check.** See
+  [verification status](#verification-status) below.
+
+---
+
+## The labs
+
+| Lab | Security concept | One line |
+| --- | --- | --- |
+| [LAB-00 Setup](labs/LAB-00-setup/README.md) | *(warm-up)* | Prove your setup works end to end: run, trace, evaluate. |
+| [LAB-01 Benign agent](labs/LAB-01-benign-agent/README.md) | Benign baseline | See what a normal, cooperative run looks like. |
+| [LAB-02 Direct prompt injection](labs/LAB-02-direct-prompt-injection/README.md) | Direct prompt injection | An instruction arrives **straight in the task**. |
+| [LAB-03 Indirect prompt injection](labs/LAB-03-indirect-prompt-injection/README.md) | Indirect prompt injection | An instruction arrives **inside content a tool returns**. |
+| [LAB-04 Tool misuse](labs/LAB-04-tool-misuse/README.md) | Tool misuse | No injected instruction — the **requested operation** is out of scope. |
+| [LAB-05 Require approval](labs/LAB-05-require-approval/README.md) | Require approval | A legitimate request is **held for authorization** instead of refused. |
+| [LAB-06 Excessive agency](labs/LAB-06-excessive-agency/README.md) | Excessive agency | The action is **allowed and executes**, though the task never needed it. |
+| [LAB-07 Data leakage](labs/LAB-07-data-leakage/README.md) | Data leakage | An **authorized read + authorized send** still move content across an egress boundary. |
+
+The labs are **not ranked**: each isolates a different question, and none is
+"worse" or "better" than another.
+
+---
+
+## Getting started
+
+Requires **Python 3.11+** (`py` on Windows, `python` elsewhere) and a terminal in
+the repository root. No API key and no network connection are needed.
+
+```bash
+# 1. install (documentation and test extras are optional)
+py -m pip install -e ".[dev]"
+
+# 2. run your first lab — this writes a trace
+PYTHONPATH=src py -m agentsec run labs/LAB-00-setup/config.yaml
+
+# 3. list the events it wrote, in order
+PYTHONPATH=src py -m agentsec inspect runs/lab00_setup/trace.jsonl
+
+# 4. evaluate the trace on its own (read-only; re-runs nothing)
+PYTHONPATH=src py -m agentsec evaluate runs/lab00_setup/trace.jsonl
+
+# 5. confirm every lab still behaves as documented
+PYTHONPATH=src py -m agentsec labs check
 ```
-README.md
-research/
-├── 01-landscape-and-gap-analysis.md     # the deliverable: landscape, comparisons, gaps, directions
-└── tables/
-    ├── benchmark-comparison.csv          # 23 artefacts x 22 fields, machine-readable
-    ├── gap-matrix.csv                    # 22 works x 16 capability columns + evidence level
-    └── sources.csv                       # 50 sources with verification status
-```
 
-Start with `research/01-landscape-and-gap-analysis.md`. It is organised as sections **A–M** matching the brief:
+Then:
 
-| Section | Content |
-|---|---|
-| 0 | Method, evidentiary rules, verification labels, limitations of this pass |
-| A | Executive research landscape summary |
-| B (1A–1Q) | Literature analysis by topic |
-| C (§2) | Benchmark comparison, plus three observations it yields |
-| D (§3) | Research-gap matrix and per-column verdicts |
-| E (§4) | Eight candidate gaps, with three explicit rejections |
-| F (§5) | Three strongest directions, compared qualitatively (no numerical scoring) |
-| G (§6) | Model-availability assessment for the four available models |
-| J (§7) | Reproducibility requirements and a proposed repository structure |
-| K (§8) | Threats to validity |
-| L (§9) | Critical reviewer assessment |
-| M | Bibliography |
-| Appendix | Blocking next actions |
+- **[`labs/GETTING-STARTED.md`](labs/GETTING-STARTED.md)** — the guided path from
+  install to reading your first trace.
+- **[`labs/README.md`](labs/README.md)** — the lab map, the observables matrix
+  and the event vocabulary.
+- **[`labs/LOCAL-VERIFICATION.md`](labs/LOCAL-VERIFICATION.md)** — what
+  `agentsec labs check` verifies and what it deliberately does **not** claim.
+- **[`labs/INSTRUCTOR-GUIDE.md`](labs/INSTRUCTOR-GUIDE.md)** — instructor-facing
+  teaching material: sequence, timings, discussion prompts and a marking rubric
+  (it does not contain the exercise answers).
+
+Build the documentation site locally with
+`py -m pip install -e ".[docs]"` and `py -m mkdocs build --strict`.
 
 ---
 
-## Evidentiary rules this repository follows
+## Documentation site
 
-These are enforced conventions, not aspirations. They exist because the project's stated requirement is that nothing may be fabricated.
+**<https://nadeem-majeedch.github.io/agent-security-labs/>**
 
-1. **Every load-bearing claim was retrieved from a primary source in the session that produced it** — arXiv abstract pages, publisher/proceedings pages, standards drafts, repository or dataset pages.
-2. **Verification labels.** `A` = primary source fetched. `B` = traceable secondary source only. `C` = unverified; **not usable in a paper until re-checked**. Recorded per source in `research/tables/sources.csv`.
-3. **Venue claims are made only when the authors' own arXiv `Comments` field or a proceedings page states them.** Inference from prestige or from third-party bibliographies is not allowed.
-4. **Missing data is written `not reported` or `unverified`.** It is never filled by inference. The two terms are distinct: `not reported` is weak evidence of absence; `unverified` is no evidence.
-5. **No numeric result, benchmark score, citation, DOI or venue in this repository was produced from memory.**
-6. **Where a claim's status is contested, the conflict is recorded rather than resolved by preference** (see the ST-WebAgentBench venue conflict and the capability–vulnerability contradiction between MCPTox and RAS-Eval).
-7. **Community artefacts are not treated as peer-reviewed benchmarks.** `AgentInjectionBench` is recorded as a Hugging Face dataset with no located publication, and is explicitly marked as not citable as a benchmark.
-
-### Known limitations of the current pass
-
-- Most entries rest on **abstract-level** evidence, not full-text reading. `research/tables/gap-matrix.csv` carries a per-row `evidence_level` column for this reason. **The gap matrix is provisional** and must be re-derived from full texts before it justifies any publication claim.
-- Coverage is English-language and skewed toward arXiv, ACL, NeurIPS, ICLR, ICML and USENIX. Non-English venues and industry disclosures are under-sampled.
-- Search-engine sampling is not a systematic review. A documented database query (Scopus / Web of Science / ACM DL / IEEE Xplore) is still required.
+The site is built from the lab documentation itself (`docs_dir: labs` in
+[`mkdocs.yml`](mkdocs.yml)), so there is no second copy to keep in sync, and it is
+published to GitHub Pages by [`docs.yml`](.github/workflows/docs.yml) on pushes to
+`main`. It contains Getting Started, the Lab Map, the trace walkthroughs, the
+practice exercises, the instructor guide and the local-verification page. The
+instructor answer key is built but intentionally not part of the site navigation.
 
 ---
 
-## Headline findings from the analysis
+## Verification status
 
-Stated here only as pointers into the document; the reasoning and evidence are in §A, §C and §E.
+Re-run locally at this revision:
 
-- **Operational cost is the only comparison field that is uniformly absent** across every benchmark examined. That uniformity, not any single omission, is the strongest evidence in the analysis. Details: §C.3, §D.1.
-- **Two credible benchmarks report opposite relationships between model capability and attack susceptibility** (MCPTox, `arXiv:2508.14925`; RAS-Eval, `arXiv:2506.15352`). Neither addresses the other. Details: §B (1N), §E (Gap 2).
-- **The first three adjectives of the project's theme are already occupied** by AgentDojo, ASB, RAS-Eval and AgentDyn. The differentiating element, if any, is cost plus independent verifiability. Details: §A.4.
-- **The available model set cannot support a capability-spread study**, because all four models sit in the same "Flash"/mini tier, and three of four providers are from one region. This threatens one of the three candidate directions outright. Details: §G.
-- **Three candidate gaps are explicitly rejected** rather than reframed, because existing work substantially addresses them. Details: §D.3.
+| Check | Command | Result |
+| --- | --- | --- |
+| Test suite | `PYTHONPATH=src py -m pytest` | **694 tests pass** (exit 0) |
+| Lab self-check | `PYTHONPATH=src py -m agentsec labs check` | **8/8 labs pass** (exit 0) |
+| Documentation build | `py -m mkdocs build --strict` | **builds with no warnings or errors** (exit 0) |
 
----
-
-## AI-tool use
-
-This repository requires transparency about how AI systems were used. The policy is drafted in §J.3 of the analysis document. Its central rule, which applied to this deliverable:
-
-> No AI system generated a citation, a numeric result, or a claim about the literature without independent verification at the primary source.
-
-**Disclosure for this deliverable:** an AI coding assistant was used to search for and retrieve sources, and to draft and structure the document. Every citation marked `A` was retrieved and read during the session. Every source marked `B` or `C` is flagged as such in `research/tables/sources.csv` and must be verified by a human before use in a manuscript.
+[`ci.yml`](.github/workflows/ci.yml) runs the test suite and then the lab
+self-check on every push and pull request, so a change that breaks a canonical
+lab scenario fails the build.
 
 ---
 
-## Immediate next actions
+## What this project does **not** claim
 
-In dependency order. Items 1–2 block any experimental design.
+- It is **not a benchmark**, and it is not a scoring system or a ranking of
+  attacks.
+- It does **not** claim **research novelty**. The concepts taught here are
+  established ones, reimplemented as small, inspectable, deterministic
+  observations for teaching.
+- It does **not** claim **security effectiveness** and does **not** assert that
+  any policy is "effective" or that any attack "succeeds".
+- It does **not** claim anything about **real model or agent behaviour**. The
+  model is a deterministic fixture; repeated runs demonstrate determinism, not a
+  distribution over real behaviour.
+- It is **not** a measurement of real-world data leakage. LAB-07's transfer is
+  task-requested, policy-authorized and entirely synthetic, in memory only.
+- It is **not** a production framework and **not** a content-filtering or DLP
+  system. Redaction is best-effort by design.
+- It makes **no paper claim**: there is no abstract, no paper and no draft.
 
-1. **Full-text reading (blocking).** AgentDyn; Zhan et al. (`2503.00061`); Kirgis et al. (`2605.08545`); Progent; RAS-Eval; ASB; AgentDojo; and the taxonomy/consistency paper (`2605.16282`) to avoid duplicating its comparison.
-2. **Systematic database search** with a documented, reproducible query string, to replace search-engine sampling and to check gaps 4 and 5 for prior art.
-3. **Model verification.** Obtain vendor-issued specification pages and exact API model IDs for all four models; determine whether weights are downloadable and hash-pinnable. This also decides whether one of the three candidate directions survives.
-4. **Check provider terms** for redistribution of raw model outputs — this gates the entire reproducibility design.
-5. **Resolve the outstanding venue questions** in the bibliography, or drop the venue claim.
+**Research boundary.** The research status recorded in
+[`docs/development.md`](docs/development.md) stands: the Phase 17 research
+transition is **CLOSED**, previously closed research directions **remain closed**,
+and no research experiment, benchmark or real-model integration is included or
+authorised here.
 
 ---
 
-## Licences
+## Who this is for
 
-Not yet assigned. Before any public release, `LICENSE` (code), `LICENSE-DATA` (data, likely CC-BY-4.0) and `CITATION.cff` must be created, and the dual-use policy for releasing attack payloads must be written.
+| Audience | Start here |
+| --- | --- |
+| **Students** | [`labs/GETTING-STARTED.md`](labs/GETTING-STARTED.md), then the labs in order, then [`labs/TRACE-READING-EXERCISES.md`](labs/TRACE-READING-EXERCISES.md) |
+| **Instructors** | [`labs/INSTRUCTOR-GUIDE.md`](labs/INSTRUCTOR-GUIDE.md) (teaching sequence, rubric, discussion prompts) |
+| **Researchers / reviewers** | [`docs/development.md`](docs/development.md) for the architecture and status; [`schemas/trace/`](schemas/trace) and [`src/agentsec/`](src/agentsec) for the implementation; [`tests/`](tests) for what is enforced; [`labs/LOCAL-VERIFICATION.md`](labs/LOCAL-VERIFICATION.md) to reproduce the lab checks |
+| **History of the research direction** | [`research/12-research-direction-selection-audit.md`](research/12-research-direction-selection-audit.md), [`research/13-lab-scope-and-architecture.md`](research/13-lab-scope-and-architecture.md), [`research/14-implementation-blueprint.md`](research/14-implementation-blueprint.md) (historical records; not rewritten) |
+
+---
+
+## Repository status
+
+- **Existing, working artefact** — the package, the eight labs, the test suite,
+  the offline self-check, the documentation site and the CI workflows are
+  implemented at this revision.
+- **Requirements:** Python 3.11+; three runtime dependencies (`pydantic`,
+  `jsonschema`, `PyYAML`). `httpx` is declared as an optional extra for a future
+  live adapter that **does not exist**; MkDocs is an optional `docs` extra.
+- **No licence has been assigned yet.** [`pyproject.toml`](pyproject.toml)
+  records `license = "TBD"`, and no `LICENSE` or `CITATION.cff` file exists yet —
+  so this repository carries no granted licence at present.
+- **No LAB-08**, deliberately; the lab sequence ends at LAB-07.
+- **No live model provider**, no network functionality and no defences are
+  included: the adversarial labs observe behaviour only.
