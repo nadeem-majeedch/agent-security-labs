@@ -180,7 +180,32 @@ py -m pip install -e ".[dev]"
 
 Requires Python 3.11+. Core runtime dependencies are `pydantic`, `jsonschema`
 and `PyYAML` (the policy YAML loader). `httpx` is an optional extra for future
-live provider adapters and is not needed by anything current.
+live provider adapters and is not needed by anything current. The pinned
+`docs` extra (`mkdocs-material==9.7.7`, `mkdocs==1.6.1`) is the tested
+documentation toolchain and is not required to run the labs or the tests.
+
+### Editable-install metadata (W9)
+
+`py -m pip install -e ".[dev]"` writes an editable-install snapshot into
+`src/agentsec.egg-info/` (and a matching `*.dist-info` into `site-packages`).
+That snapshot is **generated and git-ignored**; it is never committed and is
+not part of the distributed wheel.
+
+Because it is a snapshot, it can go **stale**: after any change to package
+metadata in `pyproject.toml` (version, description, licence, authors,
+dependencies), the on-disk metadata still describes the previous values, so
+`pip show agentsec` and the local install can be misleading. `scripts/release_check.py`
+reports exactly this situation as the non-blocking warning **W9**.
+
+After changing package metadata, refresh the snapshot:
+
+```bash
+py -m pip install -e ".[dev]"
+```
+
+or delete the stale directory (`src/agentsec.egg-info/`) and let the next
+editable install regenerate it. Do not hand-edit it and do not commit it —
+regenerate it from `pyproject.toml` instead.
 
 ## Run the tests
 

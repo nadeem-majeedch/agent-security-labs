@@ -14,8 +14,6 @@ venv/
 
 # Lab runtime output
 runs/
-traces/*.jsonl
-!traces/examples/
 
 # Docs site build output
 site/

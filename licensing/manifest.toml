@@ -151,7 +151,6 @@ status = "not-distributed"
 paths = [
   # Lab runtime output.
   "runs/",
-  "traces/*.jsonl",
 
   # Documentation site build output.
   "site/",

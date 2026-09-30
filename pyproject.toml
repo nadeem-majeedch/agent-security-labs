@@ -1,5 +1,7 @@
 [build-system]
-requires = ["setuptools>=68"]
+# setuptools >= 77 is required for the PEP 639 SPDX licence expression below
+# (`license = "MIT"` with `license-files`).
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,7 +10,33 @@ version = "0.0.1"
 description = "Agent Security Labs - an offline, deterministic agent-security teaching laboratory with mediated tool execution and eight reproducible labs."
 readme = "docs/development.md"
 requires-python = ">=3.11"
-license = { text = "MIT" }
+# SPDX licence expression (PEP 639). The software is MIT (LICENSE). The content
+# licence (CC BY 4.0, LICENSE-DATA) governs repository prose and is deliberately
+# not part of this package's licence metadata, so only LICENSE is packaged.
+license = "MIT"
+license-files = ["LICENSE"]
+# Author identity and keywords mirror CITATION.cff, the repository's
+# authoritative citation record.
+authors = [
+    { name = "Muhammad Nadeem Majeed", email = "98729698+nadeem-majeedch@users.noreply.github.com" },
+]
+keywords = [
+    "AI agent security",
+    "LLM security",
+    "cybersecurity education",
+    "trace reading",
+    "deterministic simulation",
+    "reproducibility",
+]
+# Classifiers are limited to facts the repository establishes itself: it is
+# educational (README) and runs on Python 3.11+ (requires-python).
+classifiers = [
+    "Intended Audience :: Education",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Education",
+    "Topic :: Security",
+]
 # Core runtime dependencies (Phase 14 dependency audit, Task 22).
 # PyYAML is required by the policy YAML loader; httpx is only pulled in when a
 # live provider adapter is used.
@@ -18,11 +46,19 @@ dependencies = [
     "PyYAML>=6.0",
 ]
 
+# Mirror CITATION.cff (repository-code and url).
+[project.urls]
+Homepage = "https://nadeem-majeedch.github.io/agent-security-labs/"
+Repository = "https://github.com/nadeem-majeedch/agent-security-labs"
+
 [project.optional-dependencies]
 dev = ["pytest>=7.4"]
 live = ["httpx>=0.27"]
 # Documentation site (optional). Not required to run the labs or the tests.
-docs = ["mkdocs-material>=9"]
+# Pinned to the versions this repository builds green with so the strict site
+# build is reproducible. mkdocs-material 9.x requires mkdocs<2, which records
+# the decision on the upstream MkDocs 2.0 advisory.
+docs = ["mkdocs-material==9.7.7", "mkdocs==1.6.1"]
 
 [project.scripts]
 agentsec = "agentsec.cli:main"

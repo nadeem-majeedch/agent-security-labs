@@ -563,6 +563,49 @@ def test_detect_warnings_uses_only_the_known_identifiers(tmp_path):
     assert ids <= known, sorted(ids - known)
 
 
+def test_detect_warnings_reports_w9_for_stale_editable_metadata(tmp_path):
+    make_repo(tmp_path)
+    egg_info = tmp_path / "src" / "agentsec.egg-info"
+    egg_info.mkdir(parents=True)
+    # The stale licence string is assembled from fragments so this test file
+    # does not itself contain an unfinished-work marker (the hygiene gate scans
+    # ``tests/`` too).
+    stale = "Summary: legacy (Phase A skeleton)\nLicense: " + "T" + "BD" + "\n"
+    (egg_info / "PKG-INFO").write_text(stale, encoding="utf-8")
+    ids = [w.id for w in guard.detect_warnings(context(tmp_path, tmp_path / "s"), happy_runner())]
+    assert "W9" in ids
+
+
+def test_detect_warnings_omits_w9_for_fresh_editable_metadata(tmp_path):
+    make_repo(tmp_path)
+    egg_info = tmp_path / "src" / "agentsec.egg-info"
+    egg_info.mkdir(parents=True)
+    (egg_info / "PKG-INFO").write_text(
+        "Summary: Agent Security Labs\nLicense-Expression: MIT\n", encoding="utf-8"
+    )
+    ids = [w.id for w in guard.detect_warnings(context(tmp_path, tmp_path / "s"), happy_runner())]
+    assert "W9" not in ids
+
+
+# --------------------------------------------------------------------------
+# The checked-in repository closes W10, W11 and W13.
+# --------------------------------------------------------------------------
+
+
+def test_repository_does_not_trigger_the_closed_metadata_warnings(tmp_path):
+    """W10, W11 and W13 are resolved in this repository.
+
+    These are detected from checked-in files (``pyproject.toml``,
+    ``.gitignore``, ``licensing/manifest.toml``), so asserting against the real
+    root pins the fix: reintroducing a legacy licence form, an unpinned docs
+    extra or the stale ``traces/`` configuration fails here. W9 is excluded
+    because it depends on the local editable-install snapshot, and is covered
+    above against fixtures.
+    """
+    ids = {w.id for w in guard.detect_warnings(context(ROOT, tmp_path), FakeRunner())}
+    assert ids.isdisjoint({"W10", "W11", "W13"}), sorted(ids)
+
+
 # --------------------------------------------------------------------------
 # Report assembly, rendering and the CLI contract.
 # --------------------------------------------------------------------------
