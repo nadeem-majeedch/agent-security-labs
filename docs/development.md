@@ -1,7 +1,10 @@
-# AgentSec Lab - development notes (Phase A)
+# AgentSec Lab - development notes
 
-Educational, reproducible agent-security infrastructure. Implemented so far:
-the skeleton, core data models, the trace schema/validation/recording,
+An existing, working educational agent-security laboratory. Every tool call
+passes through one mediated gateway and every run writes a readable trace, so
+behaviour is studied by reading the trace; the runs are offline and
+deterministic, with no network and no API key. It consists of core data models,
+the trace schema/validation/recording,
 redaction, a deterministic mock model, **sandboxed tools**, the **mediated
 ToolGateway**, the **minimal PolicyEngine**, a small **deterministic agent
 loop**, a **read-only descriptive evaluator**, a **thin one-run experiment
@@ -255,13 +258,26 @@ Every JSONL line is one event. All events carry `schema_version`, `run_id`,
 discriminated on `event_type`, so unknown types and missing per-type fields are
 rejected by both pydantic and the JSON Schema.
 
-The checked-in schema is generated from the pydantic models:
+The trace schema is generated from the pydantic models, and that script is its
+only writer:
 
 ```bash
 py scripts/export_trace_schema.py
 ```
 
-`tests/schema/test_schema_file.py` fails if the file and the models diverge.
+It writes the same bytes to two places: the repository copy
+(`schemas/trace/trace_event.v1.schema.json`, the artefact the README links to)
+and the packaged copy
+(`src/agentsec/schemas/trace/trace_event.v1.schema.json`). The packaged copy is
+**package data**: the runtime reads it through `importlib.resources` rather than
+searching the filesystem outward from `validate.py`, so an installed `agentsec`
+validates traces with no repository checkout beside it. Keep the two copies in
+step by regenerating them with that script.
+
+`tests/schema/test_schema_file.py` fails if the repository copy and the models
+diverge; `tests/schema/test_packaged_schema.py` fails if the packaged copy
+diverges from the models, differs from the repository copy, or stops working
+outside the repository.
 
 `TraceRecorder` stamps the shared header onto every event, redacts it, validates
 it and appends it. `event_id` is `ev-<seq>` and the clock is injectable, so a

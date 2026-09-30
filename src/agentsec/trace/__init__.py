@@ -27,6 +27,8 @@ from .validate import (
     ValidationReport,
     load_schema,
     schema_path,
+    schema_resource,
+    schema_text,
     validate_event,
     validate_jsonl,
 )
@@ -61,6 +63,8 @@ __all__ = [
     "ValidationReport",
     "load_schema",
     "schema_path",
+    "schema_resource",
+    "schema_text",
     "validate_event",
     "validate_jsonl",
     "read_events",

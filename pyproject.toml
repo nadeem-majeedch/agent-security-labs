@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "agentsec"
 version = "0.0.1"
-description = "AI Agent Security Lab - educational, reproducible agent-security infrastructure (Phase A skeleton)."
+description = "Agent Security Labs - an offline, deterministic agent-security teaching laboratory with mediated tool execution and eight reproducible labs."
 readme = "docs/development.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
@@ -29,6 +29,12 @@ agentsec = "agentsec.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+# The trace schema ships inside the package so that an installed agentsec is
+# self-contained: trace/validate.py reads it through importlib.resources, and
+# needs no repository checkout beside it.
+[tool.setuptools.package-data]
+"agentsec.schemas" = ["trace/*.json"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

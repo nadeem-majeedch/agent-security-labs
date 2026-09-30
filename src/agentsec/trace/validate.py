@@ -3,17 +3,28 @@
 Two layers are provided:
 
 * **Schema validation** - every event is checked with ``jsonschema`` against
-  the checked-in schema at ``schemas/trace/trace_event.v1.schema.json``.
+  the packaged trace schema, shipped as package data at
+  ``agentsec/schemas/trace/trace_event.v1.schema.json``.
 * **Semantic validation** - optional checks that exceed the schema: ``seq``
   must increase, and ``parent_event_id`` must reference an earlier event.
+
+The schema is read from **package resources**, never by walking the filesystem
+out of this module: an installed ``agentsec`` is self-contained, so validation
+works from a wheel with no repository checkout and no ``schemas/`` directory
+beside it. ``scripts/export_trace_schema.py`` is the single writer of the
+packaged copy and of the repository copy, and the tests enforce that both stay
+byte-identical to each other and to the pydantic models.
 
 Nothing here indexes, searches or visualizes traces.
 """
 
 from __future__ import annotations
 
+import atexit
 import json
+from contextlib import ExitStack
 from dataclasses import dataclass, field
+from importlib import resources
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
@@ -22,29 +33,73 @@ from jsonschema import Draft202012Validator
 from ..errors import TraceSchemaError
 
 SCHEMA_FILENAME = "trace_event.v1.schema.json"
-_SCHEMA_SUBPATH = Path("schemas") / "trace" / SCHEMA_FILENAME
+
+#: The package that carries the schema, and its location inside that package.
+SCHEMA_PACKAGE = "agentsec.schemas"
+SCHEMA_RESOURCE = f"trace/{SCHEMA_FILENAME}"
+
+#: Cache key for the packaged schema, as opposed to an explicit path.
+_PACKAGED_KEY = f"{SCHEMA_PACKAGE}:{SCHEMA_RESOURCE}"
+
+# ``as_file`` materialises a resource that is not already a plain file (for
+# example inside a zip import) into a temporary file. Keeping one stack open for
+# the life of the process means a path returned by ``schema_path()`` stays valid
+# for as long as the caller can use it.
+_RESOURCE_STACK = ExitStack()
+atexit.register(_RESOURCE_STACK.close)
+
+
+def schema_resource():
+    """The packaged trace schema as a :class:`importlib.resources` resource."""
+    return resources.files(SCHEMA_PACKAGE).joinpath(SCHEMA_RESOURCE)
+
+
+def _schema_text() -> str:
+    """Read the packaged schema, or explain that the install is incomplete."""
+    resource = schema_resource()
+    if not resource.is_file():
+        raise FileNotFoundError(
+            f"packaged trace schema {_PACKAGED_KEY} is missing; the agentsec "
+            "installation is incomplete (reinstall the package)"
+        )
+    return resource.read_text(encoding="utf-8")
+
+
+def schema_text() -> str:
+    """The packaged trace schema as text, with no filesystem path involved."""
+    return _schema_text()
 
 
 def schema_path() -> Path:
-    """Locate the checked-in trace schema in the repository."""
-    for parent in Path(__file__).resolve().parents:
-        candidate = parent / _SCHEMA_SUBPATH
-        if candidate.is_file():
-            return candidate
-    raise FileNotFoundError(
-        f"could not locate {_SCHEMA_SUBPATH.as_posix()} above {__file__}"
-    )
+    """A filesystem path to the packaged trace schema.
+
+    Convenience for callers that need a path rather than the contents. The
+    path is obtained from ``importlib.resources.as_file`` and is kept valid for
+    the lifetime of the process, so it can be held by the caller.
+    """
+    return _RESOURCE_STACK.enter_context(resources.as_file(schema_resource()))
 
 
-_SCHEMA_CACHE: dict[Path, dict[str, Any]] = {}
+_SCHEMA_CACHE: dict[str, dict[str, Any]] = {}
 
 
 def load_schema(path: Path | None = None) -> dict[str, Any]:
-    """Load and cache the trace JSON Schema."""
-    resolved = Path(path) if path is not None else schema_path()
-    if resolved not in _SCHEMA_CACHE:
-        _SCHEMA_CACHE[resolved] = json.loads(resolved.read_text(encoding="utf-8"))
-    return _SCHEMA_CACHE[resolved]
+    """Load and cache the trace JSON Schema.
+
+    With no argument, the schema comes from the package resources. An explicit
+    ``path`` still loads that file instead, so the helper remains usable for
+    inspecting an alternative schema on disk.
+    """
+    if path is not None:
+        resolved = Path(path)
+        key = str(resolved)
+        if key not in _SCHEMA_CACHE:
+            _SCHEMA_CACHE[key] = json.loads(resolved.read_text(encoding="utf-8"))
+        return _SCHEMA_CACHE[key]
+
+    if _PACKAGED_KEY not in _SCHEMA_CACHE:
+        _SCHEMA_CACHE[_PACKAGED_KEY] = json.loads(_schema_text())
+    return _SCHEMA_CACHE[_PACKAGED_KEY]
 
 
 def _validator(schema: Mapping[str, Any] | None) -> Draft202012Validator:

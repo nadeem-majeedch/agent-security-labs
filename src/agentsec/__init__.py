@@ -1,11 +1,15 @@
-"""AgentSec Lab - educational, reproducible agent-security infrastructure.
+"""AgentSec Lab - the implementation behind the Agent Security Labs.
 
-Phase A: core data models, trace schema/validation/recording, redaction, a
-deterministic mock model, sandboxed tools, the mediated ToolGateway, the minimal
-PolicyEngine, a small deterministic agent loop, a read-only descriptive
-evaluator, a thin one-run experiment runner, a thin CLI and a declarative
-scenario layer. Deliberately no real model adapters or lab material yet (see
-research/14-implementation-blueprint.md).
+An offline, deterministic educational agent-security laboratory: a small agent
+loop runs against a scripted model fixture and in-memory tools, every tool call
+passes through the mediated ToolGateway, and each run writes a readable JSONL
+trace. The core data models, trace schema/validation/recording, redaction, the
+minimal PolicyEngine, the read-only descriptive evaluator, the one-run
+experiment runner, the CLI and the declarative scenario layer live here; the
+eight student labs (LAB-00 to LAB-07) are repository content under ``labs/``.
+
+There are deliberately no real model adapters and no defences yet - the
+adversarial labs observe behaviour only.
 
 This package makes **no research-novelty claim**; it reimplements established
 concepts for teaching and reproducible experimentation.
