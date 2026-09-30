@@ -218,16 +218,28 @@ Re-run locally at this revision:
 
 | Check | Command | Result |
 | --- | --- | --- |
+| Release readiness (all gates) | `py scripts/release_check.py` | **READY WITH WARNINGS** (exit 0) |
 | Licence metadata and file coverage | `py scripts/check_licensing.py` | **9/9 checks pass** (exit 0) |
-| Test suite | `PYTHONPATH=src py -m pytest` | **719 tests pass** (exit 0) |
+| Version consistency | `py scripts/check_version.py` | **3/3 checks pass** (exit 0) |
+| Test suite | `PYTHONPATH=src py -m pytest` | **849 tests pass** (exit 0) |
 | Lab self-check | `PYTHONPATH=src py -m agentsec labs check` | **8/8 labs pass** (exit 0) |
 | Documentation build | `py -m mkdocs build --strict` | **builds with no warnings or errors** (exit 0) |
 
-[`ci.yml`](.github/workflows/ci.yml) checks the licence metadata first, then runs
-the test suite and the lab self-check, on every push and pull request — so a
-change that breaks a canonical lab scenario, that lets the licensing
-declarations drift apart, or that adds a file with no recorded licensing
-treatment, fails the build.
+[`scripts/release_check.py`](scripts/release_check.py) runs every gate above in a
+single read-only pass and reports one classification — `READY`,
+`READY WITH WARNINGS` or `NOT READY` — with `--json` for a machine-readable
+summary. At this revision it reports **READY WITH WARNINGS**: every gate passes,
+and the repository carries only the non-blocking warnings recorded in the
+`research/` audits. It never commits, tags, pushes or publishes; it only runs the
+checks and prints the result.
+
+[`ci.yml`](.github/workflows/ci.yml) checks the licence metadata and the declared
+version first, then runs the test suite and the lab self-check, and finishes with
+the release-readiness report, on every push and pull request — so a change that
+breaks a canonical lab scenario, that lets the licensing declarations drift
+apart, that adds a file with no recorded licensing treatment, or that lets the
+version drift between `pyproject.toml`, the package and `CITATION.cff`, fails the
+build.
 
 ---
 
@@ -312,6 +324,10 @@ CI keeps these declarations from drifting apart.
 [`scripts/check_licensing.py`](scripts/check_licensing.py) re-reads `LICENSE`,
 `LICENSE-DATA`, `pyproject.toml`, `CITATION.cff` and this README, and fails the
 build if they stop agreeing about which licence applies to what.
+[`scripts/check_version.py`](scripts/check_version.py) does the same for the
+version: `pyproject.toml` holds the authoritative number, and
+`src/agentsec/__init__.py` (`__version__`) and `CITATION.cff` (`version:`) must
+equal it, so the three cannot drift apart silently.
 
 It then checks **coverage**. Every path in this repository is recorded
 explicitly in [`licensing/manifest.toml`](licensing/manifest.toml) as MIT,
