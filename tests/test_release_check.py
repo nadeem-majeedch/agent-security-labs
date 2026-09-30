@@ -410,14 +410,20 @@ def test_gate_hygiene_flags_a_tracked_editor_file(tmp_path):
     assert ".DS_Store" in result.detail
 
 
-def test_gate_hygiene_flags_a_todo_marker_in_source(tmp_path):
+def test_gate_hygiene_flags_an_unfinished_marker_in_source(tmp_path):
     make_repo(tmp_path)
-    (tmp_path / "src" / "agentsec" / "x.py").write_text("# TODO: fix\n", encoding="utf-8")
+    # The marker is assembled from fragments so this test file does not itself
+    # contain a literal marker (the gate scans this file too). The fixture file
+    # still contains a real one, so detection is exercised exactly as before.
+    marker = "TO" + "DO"
+    (tmp_path / "src" / "agentsec" / "x.py").write_text(
+        f"# {marker}: fix\n", encoding="utf-8"
+    )
     runner = happy_runner()
     runner.git["ls-files"] = "src/agentsec/x.py\n"
     result = guard.gate_hygiene(context(tmp_path, tmp_path / "s"), runner)
     assert result.status == guard.FAIL
-    assert "TODO" in result.detail
+    assert marker in result.detail
 
 
 def test_gate_hygiene_flags_a_secret_shaped_value(tmp_path):

@@ -479,7 +479,14 @@ _SECRET_PATTERNS = (
 #: Directories scanned for secrets; tests and historical research are excluded
 #: so deliberate fixtures and prose are never reported as leaks.
 _SECRET_SCAN_ROOTS = ("src", "scripts", "labs", "policies", "configs", "schemas", "docs", ".github")
-_TODO_RE = re.compile(r"\b(TODO|FIXME|XXX|TBD)\b")
+
+#: The unfinished-work markers this gate looks for. The alternatives are built
+#: from fragments so that this file does not itself contain the words it
+#: searches for — the gate scans this file too, and a literal marker here would
+#: be reported as unfinished work in the repository. The assembled pattern is
+#: unchanged, so detection is exactly as before.
+_MARKER_WORDS = ("TO" + "DO", "FIX" + "ME", "X" + "XX", "T" + "BD")
+_TODO_RE = re.compile(r"\b(" + "|".join(_MARKER_WORDS) + r")\b")
 
 
 def gate_hygiene(ctx: Context, run) -> GateResult:
@@ -593,6 +600,11 @@ def read_target_version(root: Path) -> str | None:
     return version if isinstance(version, str) else None
 
 
+#: The stale editable-metadata licence string (W9), built from fragments for the
+#: same reason as ``_MARKER_WORDS``: the gate scans this file for markers too.
+_STALE_LICENSE = "License: " + "T" + "BD"
+
+
 def _read(path: Path) -> str:
     if not path.is_file():
         return ""
@@ -616,7 +628,7 @@ def detect_warnings(ctx: Context, run) -> list[Warning]:
         )
 
     pkg_info = _read(ctx.root / "src" / "agentsec.egg-info" / "PKG-INFO")
-    if pkg_info and ("License: TBD" in pkg_info or "Phase A skeleton" in pkg_info):
+    if pkg_info and (_STALE_LICENSE in pkg_info or "Phase A skeleton" in pkg_info):
         warnings.append(
             Warning("W9", "the local editable install metadata is stale (git-ignored)")
         )
