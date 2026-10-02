@@ -224,6 +224,99 @@ recipient is `.invalid`, the marker is a fixture, and there is no network).
 
 ---
 
+## Set H — Field discipline
+
+**H-1** — There is **no** tool name on `tool_result`; a `tool_result` records
+only `ok`, `error`, `result_hash` and `side_effects`. The tool name lives on
+`tool_requested` (and `tool_executed`). Read the result alongside those events.
+
+**H-2** — `args_redacted` carries the (redacted) arguments; `args_hash` is an
+integrity hash of the arguments. `args_redacted` is **optional** (nullable) —
+some calls may omit it.
+
+**H-3** — `parent_event_id` links to the `event_id` of the event that caused this
+one. It is **optional** (nullable near the start of a run). Following the links
+reconstructs the causal chain from task to answer.
+
+**H-4** — `schema_version` holds **`1.0`** under this schema. A different value
+would mean the line was written for a different trace-format version and should
+not be interpreted with this schema.
+
+**H-5** — `decision` appears on `policy_decision`; its allowed values are
+**`allow`**, **`deny`** and **`require_approval`**. The **`matched_rule`** and
+**`reason`** fields say why the decision was reached.
+
+**H-6** — `side_effects` is **optional** and nullable. A **non-empty** list means
+that call recorded a synthetic state change (a write, a delete, a send). `null`
+means *that call* recorded no state change; it does **not** prove that nothing
+anywhere in the run changed — another call may still have recorded effects.
+
+---
+
+## Set I — "What if" reasoning
+
+**I-1** — With `deny`, the **`tool_executed`** event is absent, and the
+`tool_result` changes to `ok=false` with a denial `error` (`side_effects` stays
+`null`). The request and decision events remain. The point: execution evidence
+disappears exactly when the decision stops being `allow`.
+
+**I-2** — A **`tool_executed`** for `mock_db` would newly appear, and the
+`tool_result` would become **`ok=true`** instead of the approval-required error
+(a read returns data, stored as `result_hash`). `side_effects` stays `null`: a
+read changes nothing.
+
+**I-3** — A **`tool_executed`** would appear, and the write's `tool_result` would
+carry a **non-empty `side_effects`** (the synthetic store changed) instead of
+`null`.
+
+**I-4** — The **`tool_executed`** event would be absent, and `side_effects` would
+be **`null`**: no execution means no recorded change.
+
+**I-5** — **No.** `require_approval` means no execution, so there is no
+`tool_executed` and therefore **no `side_effects`** — the egress never happens.
+
+**I-6** — Quote **`matched_rule`** and **`reason`**. Not "because the tool ran":
+the decision is made **before** execution and describes *authorization*. Whether
+the tool ran is a separate question, answered by `tool_executed`.
+
+---
+
+## Per-lab "what if" stretch questions
+
+**LAB-00** — `tool_executed` (`tool_name=calculator`). A `tool_requested` on its
+own is only a request.
+
+**LAB-01** — You would expect another `tool_requested` → `policy_decision` →
+`tool_executed` → `tool_result` chain (and another model turn). "One tool call"
+would no longer summarise the run: you would count **two**.
+
+**LAB-02** — **No.** A `deny` means no `tool_executed` and a `tool_result` of
+`ok=false`; the trace shows the injection *requested* a tool but the tool never
+ran. (Note the trace does not label the line as an injection — that is the
+lab's teaching point.)
+
+**LAB-03** — A **second `tool_executed`** (`tool_name=fs_sandbox`, the write) and
+a **non-empty `side_effects`** on that call's `tool_result`; the read's
+`side_effects` stays `null`.
+
+**LAB-04** — **`tool_executed`** plus a **non-empty `side_effects`** on that
+call's `tool_result` (the synthetic store changed).
+
+**LAB-05** — **Yes**, the run still completes: the pending `tool_result` and the
+final `agent_output`/`run_completed` still appear. There is **no `tool_executed`**
+for that call unless an approval is granted.
+
+**LAB-06** — The decision becomes **`require_approval`**, there is **no
+`tool_executed`**, `side_effects` is **`null`**, and the run still completes with
+a pending result.
+
+**LAB-07** — **Yes**: the `mock_db` `tool_requested`/`tool_executed`/`tool_result`
+still show the read. The egress evidence (the send's `tool_executed` and its
+`side_effects`) would be missing, and the send's `tool_result` would be `ok=false`
+with a denial error.
+
+---
+
 ## Final challenge — "Can you read the trace without guessing?"
 
 | Question | Answer |

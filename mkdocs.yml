@@ -45,7 +45,10 @@ nav:
       - LAB-06 Excessive Agency: LAB-06-excessive-agency/README.md
       - LAB-07 Data Leakage: LAB-07-data-leakage/README.md
   - Understanding Traces: TRACE-WALKTHROUGHS.md
+  - Trace Field Reference: TRACE-FIELD-REFERENCE.md
   - Practice: TRACE-READING-EXERCISES.md
   - Instructor Guide: INSTRUCTOR-GUIDE.md
   - Local Verification:
       - agentsec labs check: LOCAL-VERIFICATION.md
+      - Accepted Release Warnings: ACCEPTED-RELEASE-WARNINGS.md
+      - v0.1.0 Release Manifest: V0.1.0-RELEASE-MANIFEST.md

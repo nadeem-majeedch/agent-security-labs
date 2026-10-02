@@ -30,7 +30,6 @@ from agentsec.trace.validate import (
     schema_path,
     schema_resource,
     schema_text,
-    validate_event,
 )
 
 ROOT = Path(__file__).resolve().parents[2]

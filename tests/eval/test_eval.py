@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from agentsec.agent import Agent, AgentConfig
+from agentsec.agent import Agent
 from agentsec.errors import EvaluationError
 from agentsec.eval import EvaluationInput, RunOutcome, TraceEvaluator
 from agentsec.models.mock import MockModel, script_for

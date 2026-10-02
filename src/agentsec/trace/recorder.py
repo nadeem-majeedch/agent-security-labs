@@ -16,7 +16,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, TypeVar
+from typing import Any, Callable, TypeVar, cast
 
 from ..errors import TraceSchemaError
 from .redact import DEFAULT_REDACTOR, Redactor
@@ -116,7 +116,11 @@ class TraceRecorder:
         """
         data: dict[str, Any] = dict(self._header())
         data.update(fields)
-        return event_cls(**data)
+        # ``_EventT`` is bound to the discriminated *union* ``TraceEvent``, which
+        # mypy cannot narrow through ``type[_EventT]``: it infers the union, not
+        # the specific member. The cast is exact (the caller passes the class it
+        # expects back) and keeps the return type useful for callers.
+        return cast(_EventT, event_cls(**data))
 
     def emit(self, event: TraceEvent) -> None:
         """Redact, validate and append ``event``."""

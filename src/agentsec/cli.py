@@ -31,7 +31,7 @@ import sys
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Sequence
+from typing import Any, Never, Sequence
 
 from .errors import ConfigError, EvaluationError
 from .eval import EvaluationInput, EvaluationResult, TraceEvaluator
@@ -51,7 +51,7 @@ EXIT_CHECK_FAILED = EXIT_CONFIG
 class _Parser(argparse.ArgumentParser):
     """ArgumentParser that reports usage errors with the config exit code."""
 
-    def error(self, message: str) -> None:  # pragma: no cover - exercised via test
+    def error(self, message: str) -> Never:  # pragma: no cover - exercised via test
         self.print_usage(sys.stderr)
         self.exit(EXIT_CONFIG, f"{self.prog}: error: {message}\n")
 
@@ -76,6 +76,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     inspect = sub.add_parser("inspect", help="print a short summary of a trace")
     inspect.add_argument("trace", help="path to a JSONL trace")
+    inspect.add_argument(
+        "--events",
+        action="store_true",
+        help="also print each event's payload fields, side effects and run flags",
+    )
     inspect.set_defaults(func=_cmd_inspect)
 
     labs = sub.add_parser("labs", help="reproducibility utilities for the student labs")
@@ -177,6 +182,10 @@ def _fixed_clock() -> datetime:
 def _cmd_inspect(args: argparse.Namespace) -> int:
     path = Path(args.trace)
     events = read_events(path)
+    if args.events:
+        evaluation = TraceEvaluator().evaluate(EvaluationInput.from_events(events))
+        print(render_inspection(events, evaluation, path=path))
+        return EXIT_OK
     run_id = next((e.get("run_id") for e in events if e.get("run_id")), None)
     print(f"trace: {path}")
     print(f"run: {run_id}")
@@ -221,6 +230,88 @@ def _render_evaluation(result: EvaluationResult, indent: str = "") -> None:
 
 def _pairs(mapping: dict) -> str:
     return " ".join(f"{key}={value}" for key, value in mapping.items()) or "none"
+
+
+#: Envelope fields shown once per event, so the payload block lists only the
+#: fields specific to that event (the same split the field reference uses).
+_ENVELOPE_FIELDS = frozenset(
+    {
+        "run_id",
+        "event_id",
+        "seq",
+        "timestamp",
+        "agent_id",
+        "model",
+        "scenario",
+        "schema_version",
+        "event_type",
+        "parent_event_id",
+    }
+)
+
+
+def render_inspection(
+    events: list[dict[str, Any]], evaluation: EvaluationResult, *, path: Path
+) -> str:
+    """Render a detailed, deterministic, read-only view of one trace.
+
+    Reuses the parsed event mappings and the existing evaluator result. Every
+    value shown comes from an event the run already produced, or from the
+    evaluator's already-computed flags and warnings; nothing is executed,
+    nothing is written, and the trace is not modified.
+    """
+    lines = [f"trace: {path}", f"run: {evaluation.run_id}", f"events: {len(events)}"]
+    for index, event in enumerate(events):
+        lines.append("")
+        lines.append(f"Event {index}")
+        lines.append(f"  type: {event.get('event_type', '?')}")
+        lines.append(f"  event_id: {event.get('event_id', '?')}")
+        lines.append(f"  seq: {event.get('seq')}")
+        lines.append(f"  parent: {_display(event.get('parent_event_id'))}")
+        payload = {
+            key: value for key, value in event.items() if key not in _ENVELOPE_FIELDS
+        }
+        if payload:
+            lines.append("  fields:")
+            for key in sorted(payload):
+                lines.append(f"    {key}: {_display(payload[key])}")
+    lines.append("")
+    lines.append("Side effects:")
+    effects = [
+        (event.get("event_id", "?"), event.get("side_effects"))
+        for event in events
+        if event.get("side_effects")
+    ]
+    if effects:
+        for event_id, side_effects in effects:
+            lines.append(f"  {event_id}  {_display(side_effects)}")
+    else:
+        lines.append("  none")
+    lines.append("")
+    lines.append("Flags:")
+    if evaluation.flags:
+        for flag in sorted(evaluation.flags):
+            lines.append(f"  {flag}: {_display(evaluation.flags[flag])}")
+    else:
+        lines.append("  none")
+    lines.append("")
+    lines.append("Warnings:")
+    if evaluation.warnings:
+        lines.extend(f"  {warning}" for warning in evaluation.warnings)
+    else:
+        lines.append("  none")
+    return "\n".join(lines)
+
+
+def _display(value: object) -> str:
+    """A deterministic, readable rendering of a single trace value."""
+    if value is None:
+        return "-"
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, (dict, list)):
+        return json.dumps(value, ensure_ascii=False, sort_keys=True)
+    return str(value)
 
 
 if __name__ == "__main__":  # pragma: no cover

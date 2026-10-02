@@ -1,32 +1,66 @@
-# Continuous integration: run every release validation once, and report release
-# readiness.
+# Continuous integration: lint, type-check and report test coverage, then check
+# Python-version compatibility, then verify release readiness once.
 #
-# Structure
-# ---------
-# 1. Two standard-library guards run **before** the install so a licence or
-#    version drift fails fast, without waiting for (or needing) a network
-#    install. They are cheap, read-only and deliberately pre-install.
-# 2. The package is installed with its `dev` and `docs` extras. The `docs` extra
-#    makes the MkDocs validation a real strict build rather than an unverified
-#    warning.
-# 3. `scripts/release_check.py --json` is the **single executor** of the
-#    expensive validations. In one read-only pass it runs the test suite, the
-#    lab self-check, the strict MkDocs build, the licensing and version guards,
-#    the README link check, package self-containment, repository hygiene and the
-#    Git-state check. It prints a PASS/WARN/FAIL line per gate plus a
-#    machine-readable summary, and exits non-zero when any gate FAILs (a release
-#    blocker), so the job fails on a broken test, lab, build or guard.
+# Five levels
+# -----------
+# `lint` answers "is the code lint-clean?". It installs the development extras
+# and runs Ruff exactly once against the project's Python sources. Ruff's
+# results do not depend on the interpreter version and the configuration lives
+# in `pyproject.toml` (`[tool.ruff.lint]`, the default `E4,E7,E9,F` selection),
+# so this is a single job outside the compatibility matrix.
 #
-# Why there is no separate `pytest` or `agentsec labs check` step
-# ---------------------------------------------------------------
-# The aggregate gate already runs `python -m pytest -p no:cacheprovider` and
-# `python -m agentsec labs check`. Running them again in separate steps executed
-# the whole suite and the whole lab self-check twice. Here the gate is the only
-# place they run, so each expensive validation runs **once** while its result
-# stays visible: the gate reports `tests` and `labs` with their counts (for
-# example `852 tests passed`, `8/8 labs passed`) and names any failing gate in
-# its output. `python scripts/release_check.py --json` keeps its existing
-# behaviour, including its exit code.
+# `typecheck` answers "does the source type-check?". It installs the development
+# extras (which now include the pinned mypy and the PEP 561 stub packages) and
+# runs mypy exactly once. Type-checking is likewise interpreter-independent, so
+# it is a single job on one Python version, never multiplied across the matrix.
+#
+# `coverage` answers "how much of the source does the suite exercise?". It
+# installs the development extras (which now include the pinned pytest-cov) and
+# runs the **complete** test suite **once** with coverage measurement enabled -
+# there is deliberately no second plain `pytest` run in this job. Measurement is
+# interpreter-independent for reporting purposes, so it is a single job on one
+# Python version (3.11), never multiplied across the matrix. It is **report
+# only**: there is no coverage threshold and no `--cov-fail-under`, so a low
+# coverage number does not fail the job - the job fails only if the test run
+# itself (or the coverage plugin) is broken, exactly like any other failing
+# test. Making coverage a release blocker is a separate decision that would
+# change `scripts/release_check.py`, which stays untouched and invoked once.
+#
+# `compatibility` answers "does the software work on every supported Python
+# version?". It runs the normal test suite (which already exercises the lab
+# scenarios under `tests/labs/`) and the offline lab self-check once per Python
+# version in the matrix. The matrix uses the two practical endpoints of the
+# declared support range (`requires-python = ">=3.11"`): the minimum (3.11) and
+# the newest interpreter this repository is developed and tested against (3.13).
+# `fail-fast: false` keeps both versions reporting even if one fails.
+#
+# `release-readiness` answers "is the repository release-ready?". It runs the
+# two cheap standard-library guards before the install (fail fast on licence or
+# version drift, without a network install), installs the `dev` and `docs`
+# extras so the MkDocs validation is a real strict build rather than an
+# unverified warning, and then runs the aggregate
+# `scripts/release_check.py --json` exactly **once** on one designated version
+# (3.11, the minimum supported version). The gate is the single authoritative
+# release-readiness check and keeps its existing behaviour and exit code: it
+# exits non-zero when any gate FAILs (a release blocker). The gate's JSON report
+# is captured once to a temporary file outside the checkout, and a final
+# read-only step runs `scripts/check_warning_drift.py --gate-report <file>`, which
+# fails the job if the accepted-warning policy (`tests/test_release_check.py`),
+# its documentation (`labs/ACCEPTED-RELEASE-WARNINGS.md`) and the gate's actual
+# warnings disagree. Consuming the captured report keeps the gate to a single
+# execution; it adds no new job and changes no existing gate.
+#
+# Why the expensive checks are not multiplied
+# -------------------------------------------
+# The strict MkDocs build, the wheel/self-containment build, licensing coverage,
+# the README link check, hygiene and the Git-state check run only in
+# `release-readiness`, on one Python version - never once per matrix entry. The
+# matrix runs only the test suite and the lab self-check, which are the checks
+# that actually vary with the interpreter. Together with the independent,
+# single-run `lint`, `typecheck` and `coverage` gates, this keeps "is it
+# lint-clean?", "does it type-check?", "how much of the source does the suite
+# exercise?", "does it work on every supported Python?" and "is it
+# release-ready?" as five distinct, clearly labelled answers.
 name: CI
 
 on:
@@ -34,8 +68,95 @@ on:
   pull_request:
 
 jobs:
-  checks:
-    name: tests and lab self-check
+  lint:
+    name: lint (Ruff, Python 3.11)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install the package (with dev extras)
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Run the Ruff lint gate
+        run: ruff check src tests scripts
+
+  compatibility:
+    name: compatibility (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.13"]
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install the package (with dev extras)
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Run the test suite
+        run: python -m pytest
+
+      - name: Run the lab self-check
+        run: agentsec labs check
+
+  typecheck:
+    name: typecheck (mypy, Python 3.11)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install the package (with dev extras)
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Run the mypy type-check gate
+        run: mypy
+
+  coverage:
+    name: coverage (pytest-cov, Python 3.11)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install the package (with dev extras)
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Run the test suite once with coverage (report only)
+        run: python -m pytest --cov=agentsec --cov-branch --cov-report=term-missing
+
+  release-readiness:
+    name: release readiness (Python 3.11)
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repository
@@ -58,4 +179,7 @@ jobs:
           python -m pip install -e ".[dev,docs]"
 
       - name: Run every release gate once and report readiness
-        run: python scripts/release_check.py --json
+        run: python scripts/release_check.py --json > "${{ runner.temp }}/release-report.json"
+
+      - name: Check the accepted-warning surfaces for drift
+        run: python scripts/check_warning_drift.py --gate-report "${{ runner.temp }}/release-report.json"

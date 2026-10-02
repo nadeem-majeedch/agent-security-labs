@@ -2,7 +2,8 @@ cff-version: 1.2.0
 message: "If you use this software, please cite it using the metadata below."
 title: "Agent Security Labs"
 type: software
-version: "0.0.1"
+version: "0.1.0"
+date-released: 2026-10-01
 abstract: >-
   Agent Security Labs is an offline, deterministic, mediated-agent security
   laboratory for learning AI-agent security by reading traces. Eight educational

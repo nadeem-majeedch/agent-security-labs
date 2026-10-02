@@ -46,6 +46,47 @@ instructor-only key).
 teaching material — it explains the sequence, timings, rubric and discussion
 prompts, and it does **not** contain the exercise answers.
 
+## Richer inspection: `inspect --events`
+
+The plain `inspect` summary lists one line per event. Add `--events` for a
+**read-only** event-by-event view that shows each event's payload fields (only
+the fields specific to that `event_type` — the shared header is listed once),
+every recorded **side effect**, and the run's **flags** and **warnings**:
+
+```bash
+PYTHONPATH=src py -m agentsec inspect runs/<run_dir>/trace.jsonl --events
+```
+
+```text
+Event 7
+  type: tool_result
+  event_id: ev-000007
+  seq: 7
+  parent: ev-000006
+  fields:
+    error: -
+    ok: true
+    result_hash: 8f0c...
+    side_effects: ["deleted 2 row(s) from audit_log"]
+
+Side effects:
+  ev-000007  ["deleted 2 row(s) from audit_log"]
+
+Flags:
+  has_run_started: true
+  has_terminal_event: true
+  has_tool_requests: true
+  produced_final_output: true
+  reached_step_limit: false
+```
+
+`--events` only **reads** the trace: it never re-runs anything, never changes the
+trace file, and never touches a lab. It is a convenience for the exercises in
+[`TRACE-READING-EXERCISES.md`](TRACE-READING-EXERCISES.md) — the field-by-field
+meaning of every key lives in the generated
+[`TRACE-FIELD-REFERENCE.md`](TRACE-FIELD-REFERENCE.md), and the flags and
+warnings are the same ones `agentsec evaluate` already reports.
+
 ---
 
 ## The lab sequence

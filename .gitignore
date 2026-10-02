@@ -12,6 +12,12 @@ venv/
 .ruff_cache/
 .mypy_cache/
 
+# Coverage output (local measurement; CI reports to the log only)
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
 # Lab runtime output
 runs/
 

@@ -89,7 +89,8 @@ The same columns are laid out per lab in the
 | [`src/agentsec/`](src/agentsec) | the `agentsec` package: agent loop, tool gateway, policy engine, trace schema/recorder/redaction, descriptive evaluator, declarative scenarios, experiment runner, composition root and CLI |
 | [`labs/`](labs) | **LAB-00 … LAB-07** — each a `README.md` plus `config.yaml` (and a `scenario.yaml` for LAB-01 … LAB-07) |
 | [`labs/TRACE-WALKTHROUGHS.md`](labs/TRACE-WALKTHROUGHS.md) | an event-by-event walkthrough of the trace each lab produces |
-| [`labs/TRACE-READING-EXERCISES.md`](labs/TRACE-READING-EXERCISES.md) | 36 practice exercises (sets A–G) plus a final challenge, with an instructor-only [answer key](labs/TRACE-READING-EXERCISES-ANSWER-KEY.md) |
+| [`labs/TRACE-FIELD-REFERENCE.md`](labs/TRACE-FIELD-REFERENCE.md) | a schema-derived reference for every trace event and field (generated from the canonical schema) |
+| [`labs/TRACE-READING-EXERCISES.md`](labs/TRACE-READING-EXERCISES.md) | 48 numbered exercises (sets A–I), a per-lab "what if" section and a final challenge, with an instructor-only [answer key](labs/TRACE-READING-EXERCISES-ANSWER-KEY.md) |
 | [`policies/examples/`](policies/examples) | four example policies (`deny_by_default`, `least_privilege_v1`, and one per-lab policy each for LAB-06 and LAB-07) |
 | [`schemas/trace/`](schemas/trace) | the versioned trace-event JSON Schema (`v1`), generated from the models with a drift test |
 | [`tests/`](tests) | the offline test suite (see [verification status](#verification-status)) |
@@ -110,7 +111,7 @@ The same columns are laid out per lab in the
 | **Trace** ([`trace/`](src/agentsec/trace)) | a versioned 12-event schema, an append-only JSONL recorder with redaction-before-write, and a validator |
 | **Descriptive evaluator** ([`eval/builtin.py`](src/agentsec/eval/builtin.py)) | read-only counts, decisions, tool-result outcomes, flags and warnings — it computes **no score** and re-runs nothing |
 | **Declarative scenarios** ([`scenarios/`](src/agentsec/scenarios)) | each lab declares its expected observations; the scenario interprets an already-finished run and reports `passed` / `failed` / `inconclusive` |
-| **CLI** ([`cli.py`](src/agentsec/cli.py)) | a thin interface: `run`, `inspect`, `evaluate`, `labs check` — it contains no execution logic |
+| **CLI** ([`cli.py`](src/agentsec/cli.py)) | a thin interface: `run`, `inspect` (add `--events` for a detailed read-only view), `evaluate`, `labs check` — it contains no execution logic |
 
 The full architecture reference is in [`docs/development.md`](docs/development.md).
 
@@ -221,7 +222,7 @@ Re-run locally at this revision:
 | Release readiness (all gates) | `py scripts/release_check.py` | **READY WITH WARNINGS** (exit 0) |
 | Licence metadata and file coverage | `py scripts/check_licensing.py` | **9/9 checks pass** (exit 0) |
 | Version consistency | `py scripts/check_version.py` | **3/3 checks pass** (exit 0) |
-| Test suite | `PYTHONPATH=src py -m pytest` | **849 tests pass** (exit 0) |
+| Test suite | `PYTHONPATH=src py -m pytest` | **880 tests pass** (exit 0) |
 | Lab self-check | `PYTHONPATH=src py -m agentsec labs check` | **8/8 labs pass** (exit 0) |
 | Documentation build | `py -m mkdocs build --strict` | **builds with no warnings or errors** (exit 0) |
 
@@ -346,7 +347,7 @@ third-party material.
 Machine-readable citation metadata is provided in [`CITATION.cff`](CITATION.cff).
 If you reference this repository, please cite it as:
 
-> Majeed, M. N. (2026). *Agent Security Labs* (version 0.0.1) [Computer software].
+> Majeed, M. N. (2026). *Agent Security Labs* (version 0.1.0) [Computer software].
 > MIT Licence. <https://github.com/nadeem-majeedch/agent-security-labs>
 
 This citation identifies the **software** only. It does not assert that a study

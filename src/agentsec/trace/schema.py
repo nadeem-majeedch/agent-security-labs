@@ -16,7 +16,9 @@ from typing import Annotated, Any, Literal, Union
 
 from pydantic import BaseModel, ConfigDict, Field, RootModel, field_validator
 
-TRACE_SCHEMA_VERSION = "1.0"
+#: Annotated with the literal so the ``schema_version`` field below (typed
+#: ``Literal["1.0"]``) type-checks; a bare assignment infers plain ``str``.
+TRACE_SCHEMA_VERSION: Literal["1.0"] = "1.0"
 
 #: All defined event types, in schema order.
 TRACE_EVENT_TYPES: tuple[str, ...] = (

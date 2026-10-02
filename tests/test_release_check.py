@@ -15,10 +15,9 @@ from __future__ import annotations
 import ast
 import importlib.util
 import json
+import os
 import sys
 from pathlib import Path
-
-import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "release_check.py"
@@ -604,6 +603,60 @@ def test_repository_does_not_trigger_the_closed_metadata_warnings(tmp_path):
     """
     ids = {w.id for w in guard.detect_warnings(context(ROOT, tmp_path), FakeRunner())}
     assert ids.isdisjoint({"W10", "W11", "W13"}), sorted(ids)
+
+
+#: The exact release-warning set this repository is allowed to report.
+#:
+#: **v0.1.0 policy** (``research/50``, ``research/51``). Two accepted,
+#: non-blocking warnings remain; ``W6`` was closed at this release:
+#:
+#: * ``W6``  - CLOSED. ``CITATION.cff`` now carries ``date-released``, so the
+#:   condition that produced W6 is false and it must NOT reappear here.
+#: * ``W7``  - ACCEPTED. ``.freebuff/project-id`` is deliberately kept tracked
+#:   and recorded in ``licensing/manifest.toml`` as ``excluded``.
+#: * ``W12`` - ACCEPTED. The human-judgement licensing residual is deliberately
+#:   retained and re-stated, not retired; the gate is expected to stay
+#:   ``READY WITH WARNINGS``.
+#:
+#: This constant is the *policy*: the exact-set test below fails on any change
+#: to the reported IDs, so a new warning (say ``W14``), an unexpected W6 return,
+#: or the disappearance of W7/W12 is a deliberate, reviewed edit to this
+#: constant - never silent drift.
+ACCEPTED_RELEASE_WARNINGS = frozenset({"W7", "W12"})
+
+
+def _tracked_paths():
+    """The repository's tracked paths, from one read-only ``git ls-files``.
+
+    The contract depends on real repository state - W7 exists only because
+    ``.freebuff/project-id`` is tracked - so this single query is answered from
+    the real checkout rather than a fixture. It is the same read-only command
+    ``detect_warnings`` itself runs, and it mutates nothing.
+    """
+    result = guard.run_command(
+        ("git", "-C", str(ROOT), "ls-files"), cwd=ROOT, env=os.environ.copy()
+    )
+    assert result.returncode == 0, result.stderr
+    return [line.strip() for line in result.stdout.splitlines() if line.strip()]
+
+
+def test_repository_reports_exactly_the_accepted_warning_set(tmp_path):
+    """The real repository emits exactly W6, W7 and W12 - no more, no fewer.
+
+    This asserts on the structured ``Warning.id`` results (via
+    ``detect_warnings``), never on the human-readable render. A newly invented
+    warning such as ``W14``, or the disappearance of an accepted one, changes
+    this set and fails the test, so the accepted policy in
+    ``ACCEPTED_RELEASE_WARNINGS`` must be updated deliberately. The tracked-path
+    input is read from the real checkout so W7 reflects the actual index.
+    """
+    runner = FakeRunner()
+    runner.git["ls-files"] = "\n".join(_tracked_paths())
+    ids = {w.id for w in guard.detect_warnings(context(ROOT, tmp_path), runner)}
+    assert ids == ACCEPTED_RELEASE_WARNINGS, (
+        f"release warning policy changed: {sorted(ids)}; update "
+        "ACCEPTED_RELEASE_WARNINGS deliberately if that is intended"
+    )
 
 
 # --------------------------------------------------------------------------

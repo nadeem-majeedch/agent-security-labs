@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agentsec"
-version = "0.0.1"
+version = "0.1.0"
 description = "Agent Security Labs - an offline, deterministic agent-security teaching laboratory with mediated tool execution and eight reproducible labs."
 readme = "docs/development.md"
 requires-python = ">=3.11"
@@ -52,7 +52,27 @@ Homepage = "https://nadeem-majeedch.github.io/agent-security-labs/"
 Repository = "https://github.com/nadeem-majeedch/agent-security-labs"
 
 [project.optional-dependencies]
-dev = ["pytest>=7.4"]
+dev = [
+    "pytest>=7.4",
+    # Pinned so the lint gate cannot flip red on an upstream Ruff release (the
+    # same version-drift discipline as the pinned `docs` extra below, W11).
+    "ruff==0.12.0",
+    # Pinned type checker (research/41, research/43). Pinned for the same
+    # version-drift reason as Ruff: an unpinned mypy can flip a green CI red.
+    "mypy==1.17.1",
+    # PEP 561 stubs for the two untyped third-party imports (PyYAML, jsonschema)
+    # so mypy inspects the project's code instead of hiding those imports behind
+    # ignore_missing_imports. The ranges mirror the runtime constraints above.
+    "types-PyYAML>=6.0",
+    "types-jsonschema>=4.20",
+    # Coverage tooling (research/41, research/44). pytest-cov is the pytest
+    # plugin around `coverage`, chosen because it measures the suite inside the
+    # single `pytest` run CI already performs (no second test execution). Pinned
+    # for the same version-drift reason as Ruff and mypy above: an unpinned
+    # coverage release can change the reported numbers or break the plugin.
+    # This gate is report-only - there is deliberately no `fail_under` here.
+    "pytest-cov==7.0.0",
+]
 live = ["httpx>=0.27"]
 # Documentation site (optional). Not required to run the labs or the tests.
 # Pinned to the versions this repository builds green with so the strict site
@@ -76,3 +96,33 @@ where = ["src"]
 pythonpath = ["src"]
 testpaths = ["tests"]
 addopts = "-q"
+
+# Lint gate (research/41, research/42). Ruff's *default* rule set only:
+# E4 = pycodestyle imports, E7 = pycodestyle statements, E9 = pycodestyle
+# runtime and F = Pyflakes. Formatting (E5 line length), import sorting (I) and
+# the broader families (W, B, UP, SIM, C4, ARG, BLE) are deliberately not
+# enabled here: those are a large, separately reviewed cleanup, not this gate.
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]
+
+# Type-check gate (research/41, research/43). Deliberately minimal: no strict
+# mode and no optional check families - just a defined target interpreter and
+# the source package to check. `files` is the single place the checked scope is
+# declared, which lets CI run a bare `mypy` exactly once.
+[tool.mypy]
+python_version = "3.11"
+files = ["src/agentsec"]
+
+# agentsec depends only on pydantic, jsonschema and PyYAML. In a developer
+# environment those libraries' optional/deferred imports can reach packages that
+# are not dependencies at all; following them would make the same source produce
+# a different result on different machines. The concrete case here is
+# `IPython.lib.display`, which imports numpy - and numpy 2.5's inline stubs use
+# PEP 695 `type` statements that mypy 1.17 refuses to parse when targeting
+# Python 3.11 (the package minimum), aborting the whole run with a syntax error
+# in a file agentsec never touches. Skipping this non-dependency keeps `mypy`
+# identical in a clean CI environment and on a developer machine that happens to
+# have IPython installed. Nothing agentsec imports is hidden by this.
+[[tool.mypy.overrides]]
+module = ["IPython", "IPython.*"]
+follow_imports = "skip"

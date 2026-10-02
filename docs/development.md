@@ -23,6 +23,25 @@ labs observe behaviour only.
 The package makes **no research-novelty claim** anywhere; it reimplements
 established concepts for teaching and reproducible experimentation.
 
+## Release status (v0.1.0 — prepared)
+
+The current declared version is **`0.1.0`** (prepared 2026-10-01; see
+[`research/51-v0.1.0-release-preparation.md`](../research/51-v0.1.0-release-preparation.md)).
+The version is declared once, in `pyproject.toml` (`[project] version`), and
+`src/agentsec/__init__.py` (`__version__`) and `CITATION.cff` (`version:`, plus
+the new `date-released`) must equal it; `scripts/check_version.py` enforces that.
+
+The release gate remains **READY WITH WARNINGS** with `blockers: []`. Two
+warnings are deliberately **accepted** at this release: **W7**
+(`.freebuff/project-id` is kept tracked and recorded as `excluded` in
+`licensing/manifest.toml`) and **W12** (human-judgement licensing residuals,
+retained and re-stated rather than retired). **W6 is closed** - `CITATION.cff`
+now carries `date-released` - so it no longer appears. The accepted warning set
+is asserted exactly by `tests/test_release_check.py`
+(`ACCEPTED_RELEASE_WARNINGS`).
+
+The Phase 17 research status below is unchanged and remains authoritative.
+
 ## Research status (Phase 17 — CLOSED, research NO-GO)
 
 **Phase 17 final status (closed).**

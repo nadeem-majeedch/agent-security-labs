@@ -625,6 +625,133 @@ Answer these:
 
 ---
 
+# Exercise Set H — Field discipline
+
+These questions use the [trace field reference](TRACE-FIELD-REFERENCE.md). For
+each one, name the **field**, say whether it is **required**, and say what the
+field does **not** prove on its own.
+
+### H-1
+
+```json
+{ "event_type": "tool_result", "ok": true, "error": null,
+  "result_hash": "e909e9f3...", "side_effects": null }
+```
+
+Which field names the tool that produced this result? If the answer is "none
+here", where in the trace would you find the tool name?
+
+### H-2
+
+```json
+{ "event_type": "tool_requested", "tool_name": "fs_sandbox",
+  "args_hash": "2245fca6...", "args_redacted": { "op": "write", "path": "x" } }
+```
+
+Which field carries the (redacted) arguments, and which carries an integrity
+hash of them? Is `args_redacted` required?
+
+### H-3
+
+```json
+{ "event_id": "ev-000009", "parent_event_id": "ev-000008", "seq": 9 }
+```
+
+What does `parent_event_id` link to, and is it required? What does that link let
+you reconstruct?
+
+### H-4
+
+Every event carries `schema_version`. What value does it hold here, and what
+would a different value tell you?
+
+### H-5
+
+```json
+{ "event_type": "policy_decision", "decision": "require_approval",
+  "matched_rule": "db-read-requires-approval", "reason": "..." }
+```
+
+Which event types carry a `decision` field, what are its **allowed values**, and
+which two other fields explain *why* that decision was reached?
+
+### H-6
+
+`side_effects` appears only on `tool_result`. Is it required? What does a
+**non-empty** list mean, and what does `null` mean — does `null` prove that
+nothing happened anywhere in the run?
+
+---
+
+# Exercise Set I — "What if" reasoning
+
+Each question changes **one thing** in a trace you have already seen and asks
+which events would change. You are still answering from the trace's own rules,
+not from opinion. State the field or event that supports your answer.
+
+### I-1 (a decision flips)
+
+Take the LAB-01-style flow where a `policy_decision` is `allow` and the tool
+executes. Suppose the **same request** had been `deny` instead. Which event
+becomes **absent**, and how does the `tool_result` change?
+
+### I-2 (an approval is granted)
+
+In the approval lab a `mock_db` read is held at `require_approval`, so nothing
+executes. Suppose a human **granted** the approval and the read then ran. Which
+event would newly appear, and what would the `tool_result` show instead of the
+approval-required error?
+
+### I-3 (a write is allowed)
+
+In the tool-misuse lab a `fs_sandbox` write is `deny`ed and the store never
+changes. Suppose the **same write** had been `allow`ed and executed. Which event
+would appear, and which field would tell you the synthetic store changed?
+
+### I-4 (an authorized delete is refused)
+
+In the excessive-agency lab a `mock_db` `DELETE` is `allow`ed, executes, and
+records `side_effects=["deleted 2 row(s) from audit_log"]`. Suppose the same
+`DELETE` had been `deny`ed. Which event would be absent, and what would
+`side_effects` be?
+
+### I-5 (an egress is held)
+
+In the data-leakage lab the `mock_email` send is `allow`ed and records
+`side_effects=["sent 1 message to reports@example.invalid"]`. Suppose that send
+had been `require_approval` instead. Would the egress `side_effects` appear? Why
+or why not?
+
+### I-6 (explaining, not guessing)
+
+You are asked *why* the policy reached a decision. Which **two** fields of the
+`policy_decision` event would you quote, and why is the answer not "because the
+tool ran"?
+
+---
+
+# Per-lab "what if" stretch questions
+
+One counterfactual per lab, in the lab sequence. Answer from the **recorded
+evidence**, and name the event or field that supports each answer.
+
+| Lab | What-if question |
+| --- | --- |
+| **LAB-00** Setup | The smoke run uses the calculator and completes. Which single event tells you the calculator **actually ran** rather than was only requested? |
+| **LAB-01** Benign | The run ends after one calculator call. Suppose the model's final turn had ended with `finish_reason="tool_calls"` again instead of `"stop"`. What extra events would you expect, and would "one tool call" still be a correct summary? |
+| **LAB-02** Direct injection | The injected line asks for `6 * 7`. Suppose the policy had `deny`ed the calculator. Would the injection have "worked"? Say what the trace would and would not show. |
+| **LAB-03** Indirect injection | There are two calls: a workspace read that is `allow`ed and executes, and a write that is `deny`ed. Suppose **both** had been allowed and executed. Which second `tool_executed` and which `side_effects` value would you expect? |
+| **LAB-04** Tool misuse | The out-of-scope write is `deny`ed. Suppose it had been allowed and executed. Which two pieces of evidence would then show a state change? |
+| **LAB-05** Require approval | The read is held pending and the run still completes. Suppose no human ever approves. Does the run still complete, and is there ever a `tool_executed` for that call? |
+| **LAB-06** Excessive agency | The `DELETE` is authorized and executes. Suppose the policy had asked for approval instead. What would change in the decision, the execution and `side_effects` — and would the run still complete? |
+| **LAB-07** Data leakage | Both the read and the send are `allow`ed. Suppose the **send** had instead been `deny`ed. Would the trace still contain evidence that the record was **read**? Where would the egress evidence be missing? |
+
+> Remember: every what-if here asks which **events** would change. None of them
+> asks whether a change is "good" or "bad" — the labs are observation, not
+> scoring.
+
+---
+
 # Final challenge — "Can you read the trace without guessing?"
 
 Below is a complete LAB-01 run, shown as compact events (envelope fields omitted).
@@ -661,6 +788,7 @@ had returned `deny` instead?**
 
 ## Where to go next
 
+- Field reference (schema-derived): [`TRACE-FIELD-REFERENCE.md`](TRACE-FIELD-REFERENCE.md)
 - Cross-lab map: [`labs/README.md`](README.md)
 - Per-lab walkthroughs: [`TRACE-WALKTHROUGHS.md`](TRACE-WALKTHROUGHS.md)
 - Each lab's guide (commands, questions, checklist) is in its own folder.
