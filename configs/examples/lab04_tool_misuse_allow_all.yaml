@@ -1,0 +1,32 @@
+# LAB-04 under a permissive policy — a comparison example for `agentsec compare`.
+#
+# This is the *same* LAB-04 experiment: the same `experiment_id`, task, mock
+# fixture (`tool_misuse`) and agent. Only two things differ: `policy_path` — a
+# permissive `allow` instead of the lab's least-privilege policy — and an explicit
+# output `trace_path` so the two runs do not overwrite each other. (The lab's own
+# `labs/LAB-04-tool-misuse/config.yaml` writes to `runs/lab04_tool_misuse/trace.jsonl`.)
+#
+# Run both, then compare:
+#   python -m agentsec run configs/examples/lab04_tool_misuse_allow_all.yaml
+#   python -m agentsec run labs/LAB-04-tool-misuse/config.yaml
+#   python -m agentsec compare runs/lab04_tool_misuse_allow_all/trace.jsonl \
+#                              runs/lab04_tool_misuse/trace.jsonl
+#
+# With least privilege the request is denied, so nothing executes. With allow-all
+# the request reaches the sandbox, which still refuses the out-of-scope path. The
+# point is the policy boundary that is visible in the trace, not a verdict about
+# the policies.
+experiment_id: lab04_tool_misuse
+task: "please process the report and save a short note"
+# Deterministic mock fixture script (see agentsec.models.mock) — same as LAB-04.
+mock_script: tool_misuse
+# Permissive policy: every call is allowed (the sandbox still enforces containment).
+policy_path: policies/examples/allow_all_v1.yaml
+# Distinct output so this run does not overwrite the lab's own trace.
+trace_path: runs/lab04_tool_misuse_allow_all/trace.jsonl
+agent:
+  agent_id: agent-1
+  run_id: lab04-run-1
+  scenario: LAB-04-tool-misuse
+  config_ref: configs/examples/lab04_tool_misuse_allow_all.yaml
+  max_steps: 6

@@ -167,6 +167,61 @@ To see the scenario verdict for yourself, run the lab's verification test:
 PYTHONPATH=src py -m pytest tests/labs/test_lab05.py -q
 ```
 
+## Same lab, two decisions
+
+The policy is the only thing that decides *how* this request is answered. The
+cleanest way to see that is to run **this same lab** under a second policy that
+refuses the request outright, then compare the two traces.
+
+The repository ships a deny-by-default example policy,
+`policies/examples/deny_by_default.yaml`, and a ready-made config that runs **this
+same LAB-05 experiment** with it — the same `experiment_id`, task, mock fixture
+and agent; only the `policy_path` and the output `trace_path` differ:
+
+```bash
+# Trace A — the lab as shipped, under the least-privilege policy
+PYTHONPATH=src py -m agentsec run labs/LAB-05-require-approval/config.yaml
+
+# Trace B — the same lab under a deny-by-default policy
+PYTHONPATH=src py -m agentsec run configs/examples/lab05_require_approval_deny_by_default.yaml
+
+# Compare them
+PYTHONPATH=src py -m agentsec compare \
+  runs/lab05_require_approval/trace.jsonl \
+  runs/lab05_require_approval_deny_by_default/trace.jsonl
+```
+
+Read the comparison and look for the two events that carry the difference:
+
+* **`policy_decision`** — `require_approval` in A (matched by the
+  `db-read-requires-approval` rule) versus `deny` in B (no rule matched, so the
+  deny-by-default policy refused it).
+* **`tool_result`** — A records a **pending** result (its `error` reads
+  `approval required: …`), B records a **denied** result
+  (`error: denied: …`). Neither trace contains a `tool_executed` event.
+
+The evaluator differences name exactly these:
+
+```text
+decisions.deny:                0 -> 1
+decisions.require_approval:    1 -> 0
+tool_results.denied:           0 -> 1
+tool_results.pending_approval: 1 -> 0
+```
+
+### The distinction is not in the agent's prose
+
+Both runs finish with the **same** final answer. The mock fixture reacts to *any*
+failed tool result, and both a pending result and a denied result are failures,
+so the agent says it is waiting either way. Do **not** try to tell the two runs
+apart by their last sentence — it is identical. The difference lives in the
+trace: the **policy decision** and the resulting **tool-result category**. Read
+the `policy_decision` and `tool_result` events, not the agent's closing line.
+
+> `require_approval` means "not without a yes"; `deny` means "no". Both leave the
+> tool unexecuted — but they are different answers, and only the trace shows
+> which one the policy gave.
+
 ## Completion checklist
 
 - [ ] The experiment ran and reported a completed status.

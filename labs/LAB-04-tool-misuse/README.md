@@ -173,6 +173,84 @@ To see the scenario verdict for yourself, run the lab's verification test:
 PYTHONPATH=src py -m pytest tests/labs/test_lab04.py -q
 ```
 
+## Same lab, different policy
+
+The policy is the only thing that decided whether this out-of-scope request ran.
+The cleanest way to see what the policy *does* is to run **this same lab** under
+a second policy and compare the two traces.
+
+The repository ships a permissive example policy,
+`policies/examples/allow_all_v1.yaml`, and a ready-made config that runs **this
+same LAB-04 experiment** with it — the
+same `experiment_id`, task, mock fixture and agent; only the `policy_path` and
+the output `trace_path` differ:
+
+```bash
+# Trace A — the same lab under a permissive policy
+PYTHONPATH=src py -m agentsec run configs/examples/lab04_tool_misuse_allow_all.yaml
+
+# Trace B — the lab as shipped, under the least-privilege policy
+PYTHONPATH=src py -m agentsec run labs/LAB-04-tool-misuse/config.yaml
+
+# Compare them
+PYTHONPATH=src py -m agentsec compare \
+  runs/lab04_tool_misuse_allow_all/trace.jsonl \
+  runs/lab04_tool_misuse/trace.jsonl
+```
+
+### One-command demonstration
+
+The two runs and the comparison above are also available as **one**
+deterministic command. It runs this same LAB-04 scenario under both policies into
+a temporary directory, compares the two traces, and removes them afterwards —
+nothing is written to the repository:
+
+```bash
+PYTHONPATH=src py -m agentsec demo lab04-two-policies
+```
+
+It runs the same scenario under `allow_all_v1` (Trace A) and the least-privilege
+policy (Trace B), then prints the same factual, structural comparison produced by
+`agentsec compare` — no score, no ranking, no judgement about the policies. Add
+`--json` for a machine-readable document (the two policies plus the full
+comparison), which is deterministic and contains no timestamps or paths:
+
+```bash
+PYTHONPATH=src py -m agentsec demo lab04-two-policies --json
+```
+
+`compare` reports only factual, structural differences — event counts, the
+event-type distribution, the ordered event sequence (aligned **by position
+only**) and the evaluator decisions, tool results and flags. It produces **no
+score** and does **not** say which policy is better.
+
+Read the comparison and look for these observables:
+
+* **`tool_executed`** — present in A (`tool_executed  A 1  B 0`), absent in B. An
+  allowed request was *executed*; a denied one never was.
+* **`policy_decision`** — `allow` in A, `deny` in B.
+* **`tool_result`** — the permissive run reaches the sandbox, which **still
+  refuses the out-of-scope path** (an `error` result), while the least-privilege
+  run records a `denied` result without ever reaching the tool.
+* **the sequence shift** — A has one extra event (`tool_executed`), so every later
+  position shifts by one; `compare` shows this as a run of positional
+  differences rather than guessing a better alignment.
+
+This is the lab in miniature: the request is identical — the same `fs_sandbox`
+write to `../../etc/passwd` — and **only the policy differs**. Authorization (the
+policy gate) and containment (the sandbox itself) are two different boundaries,
+and both are visible in the same trace.
+
+> Ask *what changed* and *why*, not *which policy won*. The comparison is
+> descriptive, not a verdict.
+
+### Investigation
+
+Run the same LAB-04 scenario under the two policies above and compare the traces.
+Identify at least **three** observable differences and explain which policy
+configuration caused each one. Do **not** assign a score or an overall ranking to
+the policies.
+
 ## Completion checklist
 
 - [ ] The experiment ran and reported a completed status.

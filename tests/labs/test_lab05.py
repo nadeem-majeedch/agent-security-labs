@@ -27,6 +27,8 @@ LAB = REPO / "labs" / "LAB-05-require-approval"
 CONFIG = LAB / "config.yaml"
 SCENARIO = LAB / "scenario.yaml"
 TRACE_NAME = "trace.jsonl"
+#: The same LAB-05 experiment run under the deny-by-default example policy.
+DENY_CONFIG = REPO / "configs" / "examples" / "lab05_require_approval_deny_by_default.yaml"
 
 EXPECTED_QUERY = "SELECT note FROM notes"
 
@@ -83,6 +85,27 @@ def test_lab05_scenario_experiment_matches_config():
     assert scenario.prepare() == load_experiment_config(CONFIG)
 
 
+def test_lab05_deny_example_config_is_the_same_experiment():
+    """The deny example is LAB-05 with only the policy and trace path changed."""
+    lab = load_experiment_config(CONFIG)
+    deny = load_experiment_config(DENY_CONFIG)
+    assert deny.experiment_id == lab.experiment_id == "lab05_require_approval"
+    assert deny.task == lab.task
+    assert deny.mock_script == lab.mock_script
+    assert deny.agent.agent_id == lab.agent.agent_id
+    assert deny.agent.run_id == lab.agent.run_id
+    assert deny.agent.scenario == lab.agent.scenario
+    assert deny.agent.config_ref == lab.agent.config_ref
+    assert deny.agent.max_steps == lab.agent.max_steps
+    assert Path(deny.policy_path).name == "deny_by_default.yaml"
+    assert Path(lab.policy_path).name == "least_privilege_v1.yaml"
+    assert deny.policy_path != lab.policy_path
+    # The lab uses its default destination; the example points elsewhere.
+    assert deny.trace_path is not None
+    assert Path(deny.trace_path).name == TRACE_NAME
+    assert deny.trace_path != lab.trace_path
+
+
 # -- execution / scenario ------------------------------------------------------
 def test_lab05_scenario_passes(tmp_path):
     result, scenario = run_lab05(tmp_path)
@@ -109,6 +132,32 @@ def test_lab05_expected_observations_hold(tmp_path):
     assert evaluation.tool_results.get("pending_approval") == 1
     assert evaluation.tool_results.get("ok") == 0
     assert evaluation.flags.get("produced_final_output") is True
+
+
+def test_lab05_deny_example_is_denied_without_executing(tmp_path):
+    """The same request under deny-by-default is refused, still not executed."""
+    config = load_experiment_config(DENY_CONFIG).model_copy(
+        update={"trace_path": tmp_path / TRACE_NAME}
+    )
+    build_mvp_runner(config, clock=lambda: TS).run(config)
+
+    events = read_events(tmp_path / TRACE_NAME)
+    decisions = [e for e in events if e["event_type"] == "policy_decision"]
+    assert [d["decision"] for d in decisions] == ["deny"]
+    assert decisions[0]["matched_rule"] is None
+    assert [e for e in events if e["event_type"] == "tool_executed"] == []
+    results = [e for e in events if e["event_type"] == "tool_result"]
+    assert len(results) == 1
+    assert results[0]["ok"] is False
+    assert (results[0]["error"] or "").startswith("denied:")
+
+    # The shipped LAB-05 config, by contrast, still requires approval.
+    approval, _ = run_lab05(tmp_path)
+    assert approval.evaluation is not None
+    assert approval.evaluation.decisions["require_approval"] == 1
+    assert approval.evaluation.decisions["deny"] == 0
+    assert approval.evaluation.metrics["tool_executions"] == 0
+    assert approval.evaluation.tool_results["pending_approval"] == 1
 
 
 def test_lab05_trace_is_valid(tmp_path):

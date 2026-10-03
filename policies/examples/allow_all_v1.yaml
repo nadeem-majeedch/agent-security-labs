@@ -1,0 +1,13 @@
+# Permissive example policy: every tool call is allowed.
+#
+# This is the inverse teaching extreme of `deny_by_default.yaml`. It exists only
+# to show, together with `least_privilege_v1.yaml`, what the *policy boundary*
+# contributes to a trace: the same request, under two policies, is decided (and
+# recorded) differently.
+#
+# It grants nothing beyond the policy gate. The sandbox tools still enforce
+# *containment* - an allowed call whose arguments are out of the sandbox is still
+# refused by the tool itself - so "allowed by policy" and "succeeded" are not the
+# same thing. Keep the two boundaries (authorization and containment) separate.
+default: allow
+rules: []

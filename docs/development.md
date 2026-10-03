@@ -282,7 +282,7 @@ src/agentsec/
     ├── recorder.py      # TraceRecorder (stamps header, redacts, validates)
     └── writer.py        # append-only JSONL I/O
 schemas/trace/trace_event.v1.schema.json   # versioned trace contract
-policies/examples/                          # deny_by_default, least_privilege_v1, lab06_excessive_agency_v1, lab07_data_leakage_v1
+policies/examples/                          # deny_by_default, least_privilege_v1, allow_all_v1, lab06_excessive_agency_v1, lab07_data_leakage_v1
 labs/
 ├── LAB-00-setup/                # README.md, config.yaml (environment verification)
 ├── LAB-01-benign-agent/         # README.md, config.yaml, scenario.yaml
@@ -787,6 +787,9 @@ agentsec run configs/examples/benign.yaml --json   # machine-readable result
 agentsec evaluate trace.jsonl                       # read-only trace analysis
 agentsec evaluate trace.jsonl --json
 agentsec inspect trace.jsonl                        # short trace summary
+agentsec compare trace-a.jsonl trace-b.jsonl        # read-only comparison of two traces
+agentsec compare trace-a.jsonl trace-b.jsonl --json
+agentsec demo lab04-two-policies                    # one-command two-policy demonstration
 agentsec labs check                                 # verify every canonical lab
 ```
 
@@ -801,6 +804,25 @@ fixture script (default: `benign`).
 existing `TraceEvaluator`; it never reruns the agent, executes a tool or mutates
 the trace. `agentsec inspect` prints a short textual summary (run id, event
 count, event sequence and parent links) - it is not a viewer.
+
+`agentsec compare` reads two existing traces and reports their factual
+structural differences: the event counts and their difference, the event-type
+distribution of each trace, the ordered event sequence (aligned **by position
+only** - no semantic alignment is attempted) and the descriptive evaluator
+fields that differ (status, policy decisions, tool results, tool calls, flags and
+warnings). It reuses `read_events` and `TraceEvaluator`, produces no score,
+ranking or judgement, and modifies neither trace. A missing or malformed trace is
+a configuration error (exit `1`), reported like `evaluate`.
+
+`agentsec demo lab04-two-policies` is a small read-only teaching helper: it runs
+the same LAB-04 scenario under two policies (permissive and least-privilege) into
+a temporary directory, compares the two traces with the existing `compare` logic,
+prints the result, and removes the traces. It writes nothing to the repository and
+adds no metric, score or policy judgement. Add `--json`
+(`agentsec demo lab04-two-policies --json`) for one machine-readable document —
+the demo name, title, status, the two policies and the full `compare` result —
+suited to tooling; it is deterministic and contains no timestamps, absolute paths
+or temporary-directory names.
 
 `agentsec labs check` re-runs every canonical lab (`labs/LAB-00` … `labs/LAB-07`)
 through the same deterministic MVP stack into a **temporary** directory and
@@ -833,6 +855,13 @@ Until the package is installed, it is also runnable from a checkout with
 
 ## Note on the repository README
 
-The repository root `README.md` belongs to the surrounding research project and
-is intentionally left untouched. The student-facing lab README and the MkDocs
-site are later steps (see `research/14-implementation-blueprint.md`).
+The repository root `README.md` is the project's front-page summary and is
+maintained alongside the release: it carries the verification-status table, the
+licence boundary, the release identity and the "what this project does not
+claim" section. A documentation-consistency guard (`tests/test_readme.py`) keeps
+its advertised test count in step with the suite, the same way the schema,
+warning and release-manifest guards keep their surfaces from drifting. The
+student-facing lab material and the MkDocs site are built from `labs/`; the
+architecture and status detail lives in this file. See
+`research/14-implementation-blueprint.md` for the original lab/documentation
+plan.

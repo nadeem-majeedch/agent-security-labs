@@ -33,6 +33,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Never, Sequence
 
+from .compare import compare_traces, render_comparison
+from .demo import LAB04_TWO_POLICIES, demo_to_dict, render_demo, run_demo
 from .errors import ConfigError, EvaluationError
 from .eval import EvaluationInput, EvaluationResult, TraceEvaluator
 from .experiment import ExperimentConfig, ExperimentResult, load_experiment_config
@@ -82,6 +84,23 @@ def build_parser() -> argparse.ArgumentParser:
         help="also print each event's payload fields, side effects and run flags",
     )
     inspect.set_defaults(func=_cmd_inspect)
+
+    compare = sub.add_parser(
+        "compare", help="compare two existing traces (read-only)"
+    )
+    compare.add_argument("trace_a", help="path to the first JSONL trace")
+    compare.add_argument("trace_b", help="path to the second JSONL trace")
+    compare.add_argument("--json", action="store_true", help="emit the comparison as JSON")
+    compare.set_defaults(func=_cmd_compare)
+
+    demo = sub.add_parser("demo", help="run a small read-only teaching demonstration")
+    demo.add_argument(
+        "name",
+        choices=[LAB04_TWO_POLICIES],
+        help="which demonstration to run",
+    )
+    demo.add_argument("--json", action="store_true", help="emit the demonstration as JSON")
+    demo.set_defaults(func=_cmd_demo)
 
     labs = sub.add_parser("labs", help="reproducibility utilities for the student labs")
     labs_sub = labs.add_subparsers(dest="labs_command")
@@ -177,6 +196,36 @@ def _run_for_self_check(config: ExperimentConfig) -> ExperimentResult:
 def _fixed_clock() -> datetime:
     """A fixed clock so a self-check replay is byte-identical."""
     return datetime(2026, 1, 1, tzinfo=timezone.utc)
+
+
+def _cmd_compare(args: argparse.Namespace) -> int:
+    result = compare_traces(args.trace_a, args.trace_b)
+    if args.json:
+        print(json.dumps(result, indent=2))
+    else:
+        print(render_comparison(result))
+    return EXIT_OK
+
+
+def _cmd_demo(args: argparse.Namespace) -> int:
+    """Run a demonstration into a temporary directory and print its result.
+
+    The two traces are written to a temporary directory that is removed on exit,
+    so the repository is never written to.
+    """
+    with tempfile.TemporaryDirectory(prefix="agentsec-demo-") as tmp:
+        outcome = run_demo(tmp, execute=_run_demo_config)
+    if args.json:
+        print(json.dumps(demo_to_dict(outcome, name=args.name), indent=2))
+    else:
+        print(render_demo(outcome))
+    return EXIT_OK
+
+
+def _run_demo_config(config: ExperimentConfig) -> None:
+    """Run one demonstration configuration through the existing MVP stack."""
+    runner = build_mvp_runner(config)
+    runner.run(config)
 
 
 def _cmd_inspect(args: argparse.Namespace) -> int:

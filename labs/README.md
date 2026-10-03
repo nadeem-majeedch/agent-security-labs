@@ -87,6 +87,40 @@ meaning of every key lives in the generated
 [`TRACE-FIELD-REFERENCE.md`](TRACE-FIELD-REFERENCE.md), and the flags and
 warnings are the same ones `agentsec evaluate` already reports.
 
+## Comparing two traces: `compare`
+
+Once you can read one trace, the next question is *what changed* between two
+runs — for example the same lab under two policies, or one lab against another.
+`compare` reads two existing traces and reports what differs, **read-only and
+without re-running anything**:
+
+```bash
+PYTHONPATH=src py -m agentsec compare runs/<a>/trace.jsonl runs/<b>/trace.jsonl
+```
+
+The comparison is factual and structural. It reports:
+
+* the event **counts** and their difference;
+* the **event-type distribution** of each trace;
+* the ordered event **sequence**, aligned **by position only** — it never guesses
+  that one event "means the same as" another;
+* the **evaluator differences** — status, policy decisions, tool results, tool
+  calls, flags and warnings.
+
+```text
+Evaluator differences
+  decisions.deny: 0 -> 1
+  tool_results.denied: 0 -> 1
+```
+
+`compare` produces **no score, ranking or "better/worse" judgement** — it is a
+structural comparison only. Like `inspect` and `evaluate`, it never changes a
+trace and never touches a lab. Add `--json` for a machine-readable comparison.
+
+For a worked example that compares the **same** lab under two different policies,
+see ["Same lab, different policy"](LAB-04-tool-misuse/README.md#same-lab-different-policy)
+in the LAB-04 README.
+
 ---
 
 ## The lab sequence
