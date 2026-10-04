@@ -37,16 +37,18 @@ re-run the experiment.
 
 ## 3. Work through the labs in order
 
-Begin with **LAB-00** and continue through **LAB-07**. The **Lab Map** describes
-what each lab teaches; every lab's own page has the commands to run, the
-questions to answer and a completion checklist.
+Begin with **LAB-00** and continue through **LAB-07**. The
+**[Lab Map](README.md)** describes what each lab teaches; every lab's own page
+has the commands to run, the questions to answer and a completion checklist.
 
 ## 4. Learn to read a trace
 
-- **Understanding Traces** — an event-by-event walkthrough of the trace each lab
-  actually produces, with what to look for and what the events do **not** prove.
-- **Practice** — exercises where you decide, from the trace alone, whether a tool
-  was requested, denied, held for approval, or actually executed.
+- **[Understanding Traces](TRACE-WALKTHROUGHS.md)** — an event-by-event
+  walkthrough of the trace each lab actually produces, with what to look for and
+  what the events do **not** prove.
+- **[Practice](TRACE-READING-EXERCISES.md)** — exercises where you decide, from
+  the trace alone, whether a tool was requested, denied, held for approval, or
+  actually executed.
 
 ## 5. Try a two-policy comparison
 
@@ -278,7 +280,169 @@ The lab itself is worked through on its own page — see
 format and the `predict` command are described in the CLI reference in
 `docs/development.md`.
 
-## 10. Check your setup stays healthy
+## 10. Predict → Run → Compare → Interpret
+
+The steps above each use **one** command. This one composes three you have
+already met — `run`, `predict` and `compare` — into a single workflow: state an
+expectation, produce a trace, check the expectation, then compare that trace with
+another. Nothing new is executed and no new file is needed; it reuses the
+LAB-01/LAB-05 pair from step 8 and an existing prediction.
+
+### A. Predict
+
+Read the expectation *before* running anything.
+`configs/predictions/lab05_expect_approval.yaml` expects LAB-05's database read
+to be **held** `require_approval` — never denied, never executed. That is a claim
+about the trace, not a score.
+
+### B. Run
+
+```bash
+# Trace A — LAB-01, an authorized calculator request that executes
+PYTHONPATH=src py -m agentsec run labs/LAB-01-benign-agent/config.yaml
+
+# Trace B — LAB-05, a database read held for approval, never executed
+PYTHONPATH=src py -m agentsec run labs/LAB-05-require-approval/config.yaml
+```
+
+### C. Verify
+
+```bash
+PYTHONPATH=src py -m agentsec predict \
+  runs/lab05_require_approval/trace.jsonl \
+  configs/predictions/lab05_expect_approval.yaml
+```
+
+`predict` prints each field as `predicted` / `observed` / `MATCH` or `MISMATCH`.
+Here every field matches; if one did not, that mismatch is an experimental
+result, not a failure.
+
+### D. Compare
+
+```bash
+PYTHONPATH=src py -m agentsec compare \
+  runs/lab01_benign/trace.jsonl \
+  runs/lab05_require_approval/trace.jsonl
+```
+
+### E. Interpret
+
+Work from the output, not an opinion:
+
+1. Did the observed trace match the prediction, and which field decided it?
+2. Which structural differences does `compare` report between the two traces?
+3. Which differences are directly evidenced by the traces, and which are only
+   positional?
+4. What would be unjustified to conclude from this comparison alone?
+
+> **What each step establishes.** A prediction match means only that the trace
+> agreed with the fields you named. A comparison means only that two traces
+> differ structurally under the existing position-only alignment. **Neither**
+> establishes causality, which lab or policy is better, which is safer, or *why*
+> the agent behaved as it did. You are reading evidence, not a verdict.
+
+**Common misreadings.** Two conclusions feel natural here, and neither is
+established by this exercise:
+
+- **"LAB-01 is the better/safer run."** The comparison is descriptive: it reports
+  observed structural differences between two traces. It produces no security
+  ranking and cannot establish which run is better or safer.
+- **"The prediction match proves the run is secure."** A match only means the
+  observed trace agreed with the observations you explicitly predicted. It does
+  not establish overall security, safety or correctness, and it does not show
+  that no vulnerability exists.
+
+The two labs are worked through on their own pages — see
+**[LAB-01](LAB-01-benign-agent/README.md)** and
+**[LAB-05](LAB-05-require-approval/README.md)**. The `predict` and `compare`
+commands are documented in the CLI reference in `docs/development.md`.
+
+## 11. Predict a difference before comparing
+
+The last step predicted **one** trace, then compared two. This one reverses the
+order once more: write down how you expect **two runs to differ** *before* you
+look at the comparison. The pair is LAB-04 run under two policies — the same lab
+from step 5, but now read through `compare`.
+
+### Weak and useful predictions
+
+> **Weak:** "the two traces will be different." It is true but unfalsifiable — no
+> observation could contradict it.
+
+> **Useful:** "under the permissive policy the request is allowed and the tool
+> **executes**; under least privilege it is denied and the tool **does not
+> execute**, so the traces differ by one event." This names observations you can
+> check against the actual output.
+
+A prediction is worth writing only if the comparison could **disprove** it.
+
+### A. Predict
+
+Before running anything, answer in your own words:
+
+1. Which run do you expect to **allow** the request, and which to **deny** it?
+2. Will the tool **execute** in both runs, in one, or in neither?
+3. Will the two traces have the **same number of events**?
+4. Which **evaluator differences** do you expect (`decisions.*`, `tool_results.*`)?
+
+### B. Run
+
+```bash
+# Trace A — LAB-04 under a permissive policy (allow_all_v1)
+PYTHONPATH=src py -m agentsec run configs/examples/lab04_tool_misuse_allow_all.yaml
+
+# Trace B — the same lab under its shipped least-privilege policy
+PYTHONPATH=src py -m agentsec run labs/LAB-04-tool-misuse/config.yaml
+```
+
+### C. Compare
+
+```bash
+PYTHONPATH=src py -m agentsec compare \
+  runs/lab04_tool_misuse_allow_all/trace.jsonl \
+  runs/lab04_tool_misuse/trace.jsonl
+```
+
+### D. Verify
+
+Check your prediction against the output, field by field:
+
+- the **event counts** and the count delta;
+- the **event-type distribution** (does one run have a `tool_executed` the other
+  lacks?);
+- the **sequence** differences (aligned by position only);
+- the **evaluator differences** (`decisions`, `tool_results`).
+
+You can also confirm each side on its own — the shipped prediction
+`configs/predictions/lab04.yaml` describes the least-privilege trace:
+
+```bash
+PYTHONPATH=src py -m agentsec predict \
+  runs/lab04_tool_misuse/trace.jsonl \
+  configs/predictions/lab04.yaml
+```
+
+### E. Interpret
+
+- Which of your predictions were **correct**, and which were **wrong**?
+- Which **evidence** in the comparison supports each conclusion?
+- What does the comparison **still not establish**?
+
+> **Two boundaries to keep.** A correct prediction does **not** prove causality —
+> it shows the traces matched what you expected, not *why*. And a structural
+> difference does **not** by itself establish which run is better, safer or more
+> secure; `compare` is descriptive and produces no ranking.
+
+LAB-04 is worked through on its own page — see
+**[LAB-04-tool-misuse](LAB-04-tool-misuse/README.md)** — and the `compare` and
+`predict` commands are documented in the CLI reference in `docs/development.md`.
+
+> **Output and cleanup.** Running the example config writes
+> `runs/lab04_tool_misuse_allow_all/trace.jsonl`, which sits under the untracked
+> `runs/` directory. When you have finished, remove it with
+> `rm -rf runs/lab04_tool_misuse_allow_all`.
+
+## 12. Check your setup stays healthy
 
 ```bash
 PYTHONPATH=src py -m agentsec labs check

@@ -13,7 +13,12 @@ which shows a comparison with a real structural difference, and Phase 8 added
 "Predict before you run", which checks a learner's prediction against a trace
 with the read-only `agentsec predict` command. Phase 8A expanded that step to
 name a small set of example predictions covering distinct observable outcomes
-(approval-held, mixed allowed-and-denied, and two different tools).
+(approval-held, mixed allowed-and-denied, and two different tools). Phase 8B
+added the capstone "Predict → Run → Compare → Interpret" step, which composes the
+existing `run`, `predict` and `compare` commands into one workflow over the
+LAB-01/LAB-05 pair. Phase 8C added the capstone "Predict a difference before
+comparing", which turns a descriptive comparison of the LAB-04 two-policy pair
+into a falsifiable pre-registered prediction.
 
 These tests pin the things that make those steps useful and that no other check
 covers -- ``mkdocs build --strict`` validates links but not that the exercises
@@ -118,6 +123,44 @@ PREDICT_EXAMPLES = (
     "configs/predictions/lab03_expect_allowed_then_denied.yaml",
     "configs/predictions/lab07_expect_two_tools.yaml",
 )
+
+#: The composed predict → run → compare capstone step (Phase 8B).
+COMPOSE_SECTION_HEADING = "## 10. Predict → Run → Compare → Interpret"
+COMPOSE_RUN_A = (
+    "PYTHONPATH=src py -m agentsec run labs/LAB-01-benign-agent/config.yaml"
+)
+COMPOSE_RUN_B = (
+    "PYTHONPATH=src py -m agentsec run labs/LAB-05-require-approval/config.yaml"
+)
+COMPOSE_PREDICT = "PYTHONPATH=src py -m agentsec predict"
+COMPOSE_PREDICTION = "configs/predictions/lab05_expect_approval.yaml"
+COMPOSE_COMPARE = "PYTHONPATH=src py -m agentsec compare"
+COMPOSE_TRACES = (
+    "runs/lab01_benign/trace.jsonl",
+    "runs/lab05_require_approval/trace.jsonl",
+)
+COMPOSE_LINKS = (
+    "LAB-01-benign-agent/README.md",
+    "LAB-05-require-approval/README.md",
+)
+#: The two unjustified conclusions the misreadings note must warn against.
+COMPOSE_MISREADINGS_MARKER = "Common misreadings"
+
+#: The predict-a-difference capstone step (Phase 8C).
+DIFFERENCE_SECTION_HEADING = "## 11. Predict a difference before comparing"
+DIFFERENCE_RUN_A = (
+    "PYTHONPATH=src py -m agentsec run "
+    "configs/examples/lab04_tool_misuse_allow_all.yaml"
+)
+DIFFERENCE_RUN_B = (
+    "PYTHONPATH=src py -m agentsec run labs/LAB-04-tool-misuse/config.yaml"
+)
+DIFFERENCE_COMPARE = "PYTHONPATH=src py -m agentsec compare"
+DIFFERENCE_TRACE_A = "runs/lab04_tool_misuse_allow_all/trace.jsonl"
+DIFFERENCE_TRACE_B = "runs/lab04_tool_misuse/trace.jsonl"
+DIFFERENCE_PREDICTION = "configs/predictions/lab04.yaml"
+DIFFERENCE_RUN_CONFIG_A = "configs/examples/lab04_tool_misuse_allow_all.yaml"
+DIFFERENCE_LINK = "LAB-04-tool-misuse/README.md"
 
 
 def _text() -> str:
@@ -358,3 +401,109 @@ def test_getting_started_names_the_expanded_prediction_examples():
         assert (ROOT / example).is_file(), (
             f"the predict step names `{example}`, which does not exist"
         )
+
+
+def test_getting_started_keeps_the_predict_run_compare_section_heading():
+    text = _text()
+    headings = re.findall(r"^##\s+.*$", text, flags=re.MULTILINE)
+    assert COMPOSE_SECTION_HEADING in headings, (
+        f"labs/GETTING-STARTED.md has no `{COMPOSE_SECTION_HEADING}` section. If "
+        "the page was legitimately renumbered or retitled, update "
+        "COMPOSE_SECTION_HEADING here in the same change so the composed "
+        "workflow stays guarded."
+    )
+
+
+def test_getting_started_documents_the_predict_run_compare_workflow():
+    body = _section(COMPOSE_SECTION_HEADING)
+    for command in (COMPOSE_RUN_A, COMPOSE_RUN_B):
+        assert command in body, (
+            f"the composed step no longer documents the run command `{command}`"
+        )
+    assert COMPOSE_PREDICT in body, (
+        "the composed step no longer documents the `agentsec predict` command"
+    )
+    assert COMPOSE_PREDICTION in body, (
+        "the composed step no longer names the prediction it checks "
+        f"(`{COMPOSE_PREDICTION}`)"
+    )
+    assert (ROOT / COMPOSE_PREDICTION).is_file(), (
+        f"the composed step names `{COMPOSE_PREDICTION}`, which does not exist"
+    )
+    assert COMPOSE_COMPARE in body, (
+        "the composed step no longer documents the `agentsec compare` command"
+    )
+    for trace in COMPOSE_TRACES:
+        assert trace in body, (
+            f"the composed step no longer compares `{trace}`"
+        )
+
+
+def test_getting_started_links_both_pages_in_the_predict_run_compare_section():
+    body = _section(COMPOSE_SECTION_HEADING)
+    for link in COMPOSE_LINKS:
+        assert link in body, (
+            "the composed step no longer links "
+            f"`{link}`; point it at the lab page instead of duplicating it"
+        )
+        assert (GETTING_STARTED.parent / link).is_file(), (
+            f"the getting-started page links to `{link}`, which does not exist"
+        )
+
+
+def test_getting_started_keeps_the_common_misreadings_note():
+    body = _section(COMPOSE_SECTION_HEADING)
+    assert COMPOSE_MISREADINGS_MARKER in body, (
+        "the composed step no longer keeps the 'Common misreadings' note; it "
+        "warns readers that a comparison is not a ranking and a prediction "
+        "match does not prove security"
+    )
+
+
+def test_getting_started_keeps_the_predict_a_difference_section_heading():
+    text = _text()
+    headings = re.findall(r"^##\s+.*$", text, flags=re.MULTILINE)
+    assert DIFFERENCE_SECTION_HEADING in headings, (
+        f"labs/GETTING-STARTED.md has no `{DIFFERENCE_SECTION_HEADING}` section. "
+        "If the page was legitimately renumbered or retitled, update "
+        "DIFFERENCE_SECTION_HEADING here in the same change so the capstone "
+        "stays guarded."
+    )
+
+
+def test_getting_started_documents_the_predict_a_difference_commands():
+    body = _section(DIFFERENCE_SECTION_HEADING)
+    for command in (DIFFERENCE_RUN_A, DIFFERENCE_RUN_B):
+        assert command in body, (
+            "the capstone no longer documents the run command "
+            f"`{command}`"
+        )
+    for config in (DIFFERENCE_RUN_CONFIG_A,):
+        assert (ROOT / config).is_file(), (
+            f"the capstone runs `{config}`, which does not exist"
+        )
+    assert DIFFERENCE_COMPARE in body, (
+        "the capstone no longer documents the `agentsec compare` command"
+    )
+    for trace in (DIFFERENCE_TRACE_A, DIFFERENCE_TRACE_B):
+        assert trace in body, (
+            f"the capstone no longer compares `{trace}`"
+        )
+    assert DIFFERENCE_PREDICTION in body, (
+        "the capstone no longer references the shipped prediction "
+        f"`{DIFFERENCE_PREDICTION}`"
+    )
+    assert (ROOT / DIFFERENCE_PREDICTION).is_file(), (
+        f"the capstone references `{DIFFERENCE_PREDICTION}`, which does not exist"
+    )
+
+
+def test_getting_started_links_the_lab04_page_in_the_predict_a_difference_section():
+    body = _section(DIFFERENCE_SECTION_HEADING)
+    assert DIFFERENCE_LINK in body, (
+        "the capstone no longer links the LAB-04 page; point it at the lab "
+        "instead of duplicating it"
+    )
+    assert (GETTING_STARTED.parent / DIFFERENCE_LINK).is_file(), (
+        f"the getting-started page links to `{DIFFERENCE_LINK}`, which does not exist"
+    )

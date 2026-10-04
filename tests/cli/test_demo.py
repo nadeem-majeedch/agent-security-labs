@@ -57,6 +57,28 @@ def _write_trace(path: Path, events: list[dict]) -> None:
     )
 
 
+def _runs_snapshot() -> dict[str, bytes | None]:
+    """Snapshot the repository ``runs/`` tree: relative path -> bytes, or
+    ``None`` for a directory.
+
+    ``runs/`` may legitimately contain traces written by other commands or by the
+    documented labs, so the demo guard compares two snapshots rather than
+    asserting that a specific path is absent. Capturing files (by content) and
+    directories together detects newly created, deleted and modified entries.
+    """
+    root = REPO / "runs"
+    if not root.is_dir():
+        return {}
+    snapshot: dict[str, bytes | None] = {}
+    for path in root.rglob("*"):
+        if "__pycache__" in path.parts:
+            continue
+        snapshot[str(path.relative_to(root))] = (
+            path.read_bytes() if path.is_file() else None
+        )
+    return snapshot
+
+
 def _fake_executor(records: list):
     """An executor that writes a per-policy synthetic trace and records configs."""
 
@@ -214,10 +236,50 @@ def test_demo_cli_does_not_write_into_the_repository(capsys):
         path: path.read_bytes()
         for path in (LAB04_CONFIG, ALLOW_ALL_POLICY, LEAST_PRIVILEGE_POLICY)
     }
+    runs_before = _runs_snapshot()
     assert main(["demo", LAB04_TWO_POLICIES]) == 0
     capsys.readouterr()
-    for path, before in watched.items():
-        assert path.read_bytes() == before
+    # Same invariant as the JSON-mode guard: the demo must leave persistent
+    # repository artifacts under runs/ unchanged, whether or not any pre-existing
+    # trace (for example the documented LAB-04 allow-all run) is present.
+    assert _runs_snapshot() == runs_before, (
+        "the text-mode demo changed the repository runs/ tree; it must leave "
+        "persistent state untouched"
+    )
+    for path, before_bytes in watched.items():
+        assert path.read_bytes() == before_bytes
+
+
+def test_demo_cli_tolerates_a_preexisting_lab04_allow_all_trace(capsys):
+    """Text mode tolerates pre-existing runs/ content, exactly like JSON mode.
+
+    A legitimate LAB-04 allow-all trace must neither trip the runs/ guard nor be
+    modified or removed by the text-mode demo. Cleans up only what the test
+    itself creates.
+    """
+    target_dir = REPO / "runs" / "lab04_tool_misuse_allow_all"
+    trace = target_dir / "trace.jsonl"
+    created_dir = not target_dir.exists()
+    if created_dir:
+        target_dir.mkdir(parents=True, exist_ok=False)
+    trace_existed = trace.exists()
+    original = trace.read_bytes() if trace_existed else None
+    if not trace_existed:
+        trace.write_bytes(b"{}\n")
+    try:
+        runs_before = _runs_snapshot()
+        assert main(["demo", LAB04_TWO_POLICIES]) == 0
+        capsys.readouterr()
+        assert _runs_snapshot() == runs_before
+        assert trace.read_bytes() == (original if trace_existed else b"{}\n")
+    finally:
+        if not trace_existed:
+            trace.unlink(missing_ok=True)
+        if created_dir:
+            try:
+                target_dir.rmdir()
+            except OSError:  # pragma: no cover - only if something else appeared
+                pass
 
 
 def test_demo_cli_execution_failure_is_non_zero(capsys, monkeypatch):
@@ -334,11 +396,51 @@ def test_demo_json_leaves_no_traces_in_the_repository(capsys):
         path: path.read_bytes()
         for path in (LAB04_CONFIG, ALLOW_ALL_POLICY, LEAST_PRIVILEGE_POLICY)
     }
+    runs_before = _runs_snapshot()
     assert main(["demo", LAB04_TWO_POLICIES, "--json"]) == 0
     capsys.readouterr()
-    for path, before in watched.items():
-        assert path.read_bytes() == before
-    assert not (REPO / "runs" / "lab04_tool_misuse_allow_all").exists()
+    # The invariant is that the demo adds no persistent files under runs/ — not
+    # that a particular ``runs/<config>/`` directory is absent. Any pre-existing
+    # trace (for example the documented LAB-04 allow-all run) must be irrelevant.
+    assert _runs_snapshot() == runs_before, (
+        "the demo changed the repository runs/ tree; it must leave persistent "
+        "state untouched"
+    )
+    for path, before_bytes in watched.items():
+        assert path.read_bytes() == before_bytes
+
+
+def test_demo_json_tolerates_a_preexisting_lab04_allow_all_trace(capsys):
+    """The runs/ guard ignores pre-existing traces.
+
+    A legitimate LAB-04 allow-all trace — which the LAB-04 page documents
+    producing — must neither trip the guard nor be modified or removed by the
+    demo. This recreates the exact path the old guard wrongly rejected, cleaning
+    up only what the test itself creates.
+    """
+    target_dir = REPO / "runs" / "lab04_tool_misuse_allow_all"
+    trace = target_dir / "trace.jsonl"
+    created_dir = not target_dir.exists()
+    if created_dir:
+        target_dir.mkdir(parents=True, exist_ok=False)
+    trace_existed = trace.exists()
+    original = trace.read_bytes() if trace_existed else None
+    if not trace_existed:
+        trace.write_bytes(b"{}\n")
+    try:
+        runs_before = _runs_snapshot()
+        assert main(["demo", LAB04_TWO_POLICIES, "--json"]) == 0
+        capsys.readouterr()
+        assert _runs_snapshot() == runs_before
+        assert trace.read_bytes() == (original if trace_existed else b"{}\n")
+    finally:
+        if not trace_existed:
+            trace.unlink(missing_ok=True)
+        if created_dir:
+            try:
+                target_dir.rmdir()
+            except OSError:  # pragma: no cover - only if something else appeared
+                pass
 
 
 def test_demo_json_failure_emits_no_partial_output(capsys, monkeypatch):

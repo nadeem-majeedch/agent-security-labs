@@ -342,3 +342,32 @@ denial error). *(LAB-01.)*
 - The exercises deliberately never ask which lab is "worse" — if a student ranks
   them, redirect to the observable difference.
 - The recurring teaching point: **requested ≠ decided ≠ executed ≠ changed**.
+
+---
+
+## Predict-a-difference capstone — expected observations
+
+For the getting-started capstone "Predict a difference before comparing" (LAB-04
+run under `allow_all_v1` versus its shipped `least_privilege_v1`). These are the
+real `compare` observations; accept any prediction whose *specific* claims match
+them. The lab is identical in both runs — only the policy differs.
+
+| Observation | Allow-all (A) | Least-privilege (B) |
+|---|---|---|
+| Events | 12 | 11 (delta +1) |
+| `tool_executed` | 1 | 0 |
+| `decisions.allow` | 1 | 0 |
+| `decisions.deny` | 0 | 1 |
+| `tool_results.error` | 1 | 0 |
+| `tool_results.denied` | 0 | 1 |
+
+Evidence, not a verdict: with allow-all the request **reaches** the sandbox,
+which still refuses the out-of-scope write (containment → a `tool_result` error);
+with least privilege the policy **denies before execution** (→ a denied result,
+and no `tool_executed`). The traces also differ positionally from index 6 because
+A carries the extra `tool_executed` event; alignment is by position only.
+
+Do not accept — and redirect — conclusions such as "allow-all is safer" or
+"least privilege is better": the comparison is descriptive and ranks nothing. A
+correct prediction establishes only that the traces matched what was predicted,
+not causality.
