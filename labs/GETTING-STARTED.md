@@ -250,7 +250,19 @@ out-of-scope write is **denied**, so nothing **executes** and the tool result is
    `configs/predictions/lab02_expect_denied.yaml` guesses that a hostile
    instruction is refused. It is not: run LAB-02 and check. Report the mismatch
    rather than assuming.
-5. **Reflect.**
+5. **Check a few other kinds of outcome.** Each document below is a plain
+   expectation in the same vocabulary as a lab's own `scenario.yaml` `expected`
+   block, matched with the same rules. Run the lab it names, then predict:
+
+   - `configs/predictions/lab05_expect_approval.yaml` — the **approval** case:
+     LAB-05's database read is held `pending_approval` and never executed.
+     `configs/predictions/lab05_expect_denied.yaml` deliberately predicts a
+     *denial* instead, so you can see an approval-vs-denial guess mismatch.
+   - `configs/predictions/lab03_expect_allowed_then_denied.yaml` — one run with
+     **both** an allowed-and-executed request and a denied one.
+   - `configs/predictions/lab07_expect_two_tools.yaml` — **two different tools**
+     (`mock_db` and `mock_email`), both allowed and executed.
+6. **Reflect.**
    - Which expectation was hardest to predict before reading the trace, and why?
    - When your prediction matched, what did that *actually* establish?
    - When it clashed, was the prediction wrong or the trace surprising?
@@ -262,7 +274,9 @@ out-of-scope write is **denied**, so nothing **executes** and the tool result is
 > did not match the trace.
 
 The lab itself is worked through on its own page — see
-**[LAB-04-tool-misuse](LAB-04-tool-misuse/README.md)**.
+**[LAB-04-tool-misuse](LAB-04-tool-misuse/README.md)**. The prediction document
+format and the `predict` command are described in the CLI reference in
+`docs/development.md`.
 
 ## 10. Check your setup stays healthy
 

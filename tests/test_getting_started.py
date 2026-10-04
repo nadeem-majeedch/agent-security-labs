@@ -11,7 +11,9 @@ comparison" step that compares two *different* labs (LAB-01 and LAB-02), and
 Phase 7L added its companion, "Compare two labs that differ" (LAB-01 and LAB-05),
 which shows a comparison with a real structural difference, and Phase 8 added
 "Predict before you run", which checks a learner's prediction against a trace
-with the read-only `agentsec predict` command.
+with the read-only `agentsec predict` command. Phase 8A expanded that step to
+name a small set of example predictions covering distinct observable outcomes
+(approval-held, mixed allowed-and-denied, and two different tools).
 
 These tests pin the things that make those steps useful and that no other check
 covers -- ``mkdocs build --strict`` validates links but not that the exercises
@@ -109,6 +111,13 @@ PREDICT_TRACE = "runs/lab04_tool_misuse/trace.jsonl"
 PREDICT_PREDICTION = "configs/predictions/lab04.yaml"
 #: The lab page the predict step must link to.
 PREDICT_LINK = "LAB-04-tool-misuse/README.md"
+#: The expanded example predictions (Phase 8A) the predict step must surface.
+PREDICT_EXAMPLES = (
+    "configs/predictions/lab05_expect_approval.yaml",
+    "configs/predictions/lab05_expect_denied.yaml",
+    "configs/predictions/lab03_expect_allowed_then_denied.yaml",
+    "configs/predictions/lab07_expect_two_tools.yaml",
+)
 
 
 def _text() -> str:
@@ -337,3 +346,15 @@ def test_getting_started_links_the_lab04_page_in_the_predict_section():
     assert (GETTING_STARTED.parent / PREDICT_LINK).is_file(), (
         f"the getting-started page links to `{PREDICT_LINK}`, which does not exist"
     )
+
+
+def test_getting_started_names_the_expanded_prediction_examples():
+    body = _section(PREDICT_SECTION_HEADING)
+    for example in PREDICT_EXAMPLES:
+        assert example in body, (
+            "the predict step no longer names the example prediction "
+            f"`{example}`"
+        )
+        assert (ROOT / example).is_file(), (
+            f"the predict step names `{example}`, which does not exist"
+        )

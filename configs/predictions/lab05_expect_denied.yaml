@@ -1,0 +1,19 @@
+# A deliberately WRONG prediction for LAB-05 (Require Approval), used to
+# contrast a request that is HELD with one that is REFUSED. It guesses the policy
+# *denies* the read:
+#
+#   agentsec run labs/LAB-05-require-approval/config.yaml
+#   agentsec predict runs/lab05_require_approval/trace.jsonl \
+#     configs/predictions/lab05_expect_denied.yaml
+#
+# The trace shows the opposite: the policy answers `require_approval`, so the
+# call is held PENDING - not denied - and the tool still does not execute. The
+# mismatch is the lesson: a `require_approval` hold is a different answer from a
+# `deny`, and the tool result is `pending_approval`, not `denied`.
+#
+# A mismatch is an experimental result, not a failure: it is exactly the signal
+# that the prediction did not match the trace. Nothing here rates or judges the
+# run.
+policy_denials: 1
+tool_results_denied: 1
+tool_executions: 0

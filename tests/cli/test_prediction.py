@@ -23,9 +23,18 @@ from agentsec.mvp import build_mvp_runner
 from agentsec.prediction import check_prediction, load_prediction, render_prediction
 
 REPO = Path(__file__).resolve().parents[2]
+LAB03 = REPO / "labs" / "LAB-03-indirect-prompt-injection" / "config.yaml"
 LAB04 = REPO / "labs" / "LAB-04-tool-misuse" / "config.yaml"
-LAB04_PREDICTION = REPO / "configs" / "predictions" / "lab04.yaml"
-LAB04_MISMATCH = REPO / "configs" / "predictions" / "lab04_mismatch.yaml"
+LAB05 = REPO / "labs" / "LAB-05-require-approval" / "config.yaml"
+LAB07 = REPO / "labs" / "LAB-07-data-leakage" / "config.yaml"
+PREDICTIONS = REPO / "configs" / "predictions"
+LAB04_PREDICTION = PREDICTIONS / "lab04.yaml"
+LAB04_MISMATCH = PREDICTIONS / "lab04_mismatch.yaml"
+#: Phase 8A expanded examples, each tied to a lab with a distinct observation.
+LAB03_PREDICTION = PREDICTIONS / "lab03_expect_allowed_then_denied.yaml"
+LAB05_APPROVAL_PREDICTION = PREDICTIONS / "lab05_expect_approval.yaml"
+LAB05_DENIED_MISMATCH = PREDICTIONS / "lab05_expect_denied.yaml"
+LAB07_PREDICTION = PREDICTIONS / "lab07_expect_two_tools.yaml"
 TS = datetime(2026, 1, 1, tzinfo=timezone.utc)
 
 
@@ -265,6 +274,84 @@ def test_check_prediction_real_lab04_deliberate_mismatch(tmp_path):
     by_name = {row["name"]: row for row in result["checks"]}
     assert by_name["tool_executions"]["predicted"] == 1
     assert by_name["tool_executions"]["observed"] == 0
+
+
+# -- expanded real-lab examples (Phase 8A) -------------------------------------
+def test_check_prediction_real_lab05_approval_matches(tmp_path):
+    """LAB-05's read is *held for approval*: a pending outcome, not a denial."""
+    trace = _run_lab(LAB05, tmp_path / "lab05.jsonl")
+    result = check_prediction(trace, LAB05_APPROVAL_PREDICTION)
+    assert result["mismatched"] == []
+    assert result["trace"]["scenario"] == "LAB-05-require-approval"
+    by_name = {row["name"]: row for row in result["checks"]}
+    assert by_name["tool_results_pending_approval"]["observed"] == 1
+    assert by_name["tool_executions"]["observed"] == 0
+
+
+def test_check_prediction_real_lab05_deliberate_mismatch(tmp_path):
+    """Predicting a *denial* for LAB-05 mismatches: the policy held it instead."""
+    trace = _run_lab(LAB05, tmp_path / "lab05.jsonl")
+    result = check_prediction(trace, LAB05_DENIED_MISMATCH)
+    assert set(result["mismatched"]) == {"policy_denials", "tool_results_denied"}
+    by_name = {row["name"]: row for row in result["checks"]}
+    assert by_name["policy_denials"]["predicted"] == 1
+    assert by_name["policy_denials"]["observed"] == 0
+    assert by_name["tool_executions"]["matched"] is True
+
+
+def test_check_prediction_real_lab03_matches(tmp_path):
+    """LAB-03 allows one request and denies another within the same run."""
+    trace = _run_lab(LAB03, tmp_path / "lab03.jsonl")
+    result = check_prediction(trace, LAB03_PREDICTION)
+    assert result["mismatched"] == []
+    assert result["trace"]["scenario"] == "LAB-03-indirect-prompt-injection"
+    by_name = {row["name"]: row for row in result["checks"]}
+    assert by_name["tool_executions"]["observed"] == 1
+    assert by_name["tool_results_denied"]["observed"] == 1
+
+
+def test_check_prediction_real_lab07_matches(tmp_path):
+    """LAB-07 allows and executes two different tools in one run."""
+    trace = _run_lab(LAB07, tmp_path / "lab07.jsonl")
+    result = check_prediction(trace, LAB07_PREDICTION)
+    assert result["mismatched"] == []
+    assert result["trace"]["scenario"] == "LAB-07-data-leakage"
+    by_name = {row["name"]: row for row in result["checks"]}
+    assert by_name["requested_tools"]["observed"] == ["mock_db", "mock_email"]
+    assert by_name["tool_executions"]["observed"] == 2
+
+
+def test_expanded_prediction_json_output_is_deterministic(tmp_path, capsys):
+    trace = _run_lab(LAB05, tmp_path / "lab05.jsonl")
+    args = ["predict", str(trace), str(LAB05_APPROVAL_PREDICTION), "--json"]
+    assert main(args) == 0
+    first = capsys.readouterr().out
+    assert main(args) == 0
+    second = capsys.readouterr().out
+    assert first == second
+    assert json.loads(first)["mismatched"] == []
+
+
+def test_expanded_predictions_do_not_write_to_tracked_paths(tmp_path):
+    """Checking a prediction leaves the trace and the prediction untouched."""
+    prediction_files = [
+        LAB03_PREDICTION,
+        LAB05_APPROVAL_PREDICTION,
+        LAB05_DENIED_MISMATCH,
+        LAB07_PREDICTION,
+    ]
+    before = {path: path.read_bytes() for path in prediction_files}
+    for config, prediction, name in (
+        (LAB03, LAB03_PREDICTION, "lab03.jsonl"),
+        (LAB05, LAB05_APPROVAL_PREDICTION, "lab05.jsonl"),
+        (LAB07, LAB07_PREDICTION, "lab07.jsonl"),
+    ):
+        trace = _run_lab(config, tmp_path / name)
+        snapshot = trace.read_bytes()
+        check_prediction(trace, prediction)
+        assert trace.read_bytes() == snapshot, f"predict modified {name}"
+    for path in prediction_files:
+        assert path.read_bytes() == before[path], f"predict modified {path.name}"
 
 
 # -- errors from the module surface --------------------------------------------
