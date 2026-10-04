@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agentsec"
-version = "0.1.0"
+version = "0.2.0"
 description = "Agent Security Labs - an offline, deterministic agent-security teaching laboratory with mediated tool execution and eight reproducible labs."
 readme = "docs/development.md"
 requires-python = ">=3.11"

@@ -23,10 +23,11 @@ labs observe behaviour only.
 The package makes **no research-novelty claim** anywhere; it reimplements
 established concepts for teaching and reproducible experimentation.
 
-## Release status (v0.1.0 — prepared)
+## Release status (v0.2.0 — prepared)
 
-The current declared version is **`0.1.0`** (prepared 2026-10-01; see
-[`research/51-v0.1.0-release-preparation.md`](../research/51-v0.1.0-release-preparation.md)).
+The current declared version is **`0.2.0`**. The v0.1.0 release preparation is
+recorded, historically, in
+[`research/51-v0.1.0-release-preparation.md`](../research/51-v0.1.0-release-preparation.md).
 The version is declared once, in `pyproject.toml` (`[project] version`), and
 `src/agentsec/__init__.py` (`__version__`) and `CITATION.cff` (`version:`, plus
 the new `date-released`) must equal it; `scripts/check_version.py` enforces that.

@@ -349,7 +349,7 @@ third-party material.
 Machine-readable citation metadata is provided in [`CITATION.cff`](CITATION.cff).
 If you reference this repository, please cite it as:
 
-> Majeed, M. N. (2026). *Agent Security Labs* (version 0.1.0) [Computer software].
+> Majeed, M. N. (2026). *Agent Security Labs* (version 0.2.0) [Computer software].
 > MIT Licence. <https://github.com/nadeem-majeedch/agent-security-labs>
 
 This citation identifies the **software** only. It does not assert that a study
