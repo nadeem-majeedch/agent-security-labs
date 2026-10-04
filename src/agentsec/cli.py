@@ -39,6 +39,7 @@ from .errors import ConfigError, EvaluationError
 from .eval import EvaluationInput, EvaluationResult, TraceEvaluator
 from .experiment import ExperimentConfig, ExperimentResult, load_experiment_config
 from .mvp import build_mvp_runner
+from .prediction import check_prediction, render_prediction
 from .selfcheck import check_labs, render_report, report_to_dict
 from .trace.writer import read_events
 
@@ -92,6 +93,14 @@ def build_parser() -> argparse.ArgumentParser:
     compare.add_argument("trace_b", help="path to the second JSONL trace")
     compare.add_argument("--json", action="store_true", help="emit the comparison as JSON")
     compare.set_defaults(func=_cmd_compare)
+
+    predict = sub.add_parser(
+        "predict", help="compare a prediction against an existing trace (read-only)"
+    )
+    predict.add_argument("trace", help="path to a JSONL trace")
+    predict.add_argument("prediction", help="path to a prediction document (YAML)")
+    predict.add_argument("--json", action="store_true", help="emit the result as JSON")
+    predict.set_defaults(func=_cmd_predict)
 
     demo = sub.add_parser("demo", help="run a small read-only teaching demonstration")
     demo.add_argument(
@@ -204,6 +213,21 @@ def _cmd_compare(args: argparse.Namespace) -> int:
         print(json.dumps(result, indent=2))
     else:
         print(render_comparison(result))
+    return EXIT_OK
+
+
+def _cmd_predict(args: argparse.Namespace) -> int:
+    """Compare a learner's prediction against an existing trace.
+
+    Read-only: it never runs an experiment, executes a tool or mutates the trace.
+    A mismatch is an experimental result, so the command still exits ``0``; only a
+    malformed/missing trace or prediction is a configuration error (exit ``1``).
+    """
+    result = check_prediction(args.trace, args.prediction)
+    if args.json:
+        print(json.dumps(result, indent=2))
+    else:
+        print(render_prediction(result))
     return EXIT_OK
 
 

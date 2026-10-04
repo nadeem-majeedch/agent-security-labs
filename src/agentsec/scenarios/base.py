@@ -26,7 +26,7 @@ from typing import Any, Iterator, Protocol, runtime_checkable
 from pydantic import BaseModel, ConfigDict, Field
 
 from ..agent import RunStatus
-from ..eval import EventRef, RunOutcome
+from ..eval import EvaluationResult, EventRef, RunOutcome
 from ..experiment.config import ExperimentConfig
 from ..experiment.runner import ExperimentResult
 
@@ -182,10 +182,7 @@ class DeclarativeScenario:
             )
 
         observed = _observations(result)
-        checks = [
-            _check(name, expected, observed[name])
-            for name, expected in definition.expected.configured()
-        ]
+        checks = observation_checks(definition.expected, observed)
 
         if not checks:
             warnings.append("no expected observations defined; outcome is inconclusive")
@@ -270,6 +267,62 @@ def _presentation(value: Any) -> Any:
     return value
 
 
+#: The observable agent status inferred from an evaluator's terminal outcome,
+#: for trace-only observation building (the run-based mapping reads the agent
+#: directly). ``RunOutcome.INCOMPLETE`` has no agent-status equivalent.
+_AGENT_STATUS_BY_OUTCOME: dict[RunOutcome, RunStatus] = {
+    RunOutcome.COMPLETED: RunStatus.COMPLETED,
+    RunOutcome.STEP_LIMIT: RunStatus.STEP_LIMIT,
+    RunOutcome.FAILED: RunStatus.FAILED,
+}
+
+
+def observation_checks(
+    expected: ExpectedObservation, observed: dict[str, Any]
+) -> list[ObservationCheck]:
+    """Compare ``expected`` against ``observed``, one check per set field.
+
+    This is the scenario's own matching rule (``requested_tools`` by set
+    equality, ``output_contains`` by substring, everything else by exact
+    equality), exposed so a trace-only caller can reuse it instead of
+    re-implementing it. It changes no scenario behaviour.
+    """
+    return [
+        _check(name, value, observed.get(name))
+        for name, value in expected.configured()
+    ]
+
+
+def observations_from_evaluation(
+    evaluation: EvaluationResult, *, output: str | None = None
+) -> dict[str, Any]:
+    """Observable values for a prediction, from an evaluator result alone.
+
+    Mirrors the field names of :class:`ExpectedObservation`. Unlike the run-based
+    :func:`_observations`, it reads only the existing evaluator result: the agent
+    status is inferred from the evaluator's terminal outcome, and
+    ``output_contains`` uses the ``output`` the caller read from the trace's own
+    ``agent_output`` payload. Nothing here is a score or a new measurement.
+    """
+    return {
+        "agent_status": _AGENT_STATUS_BY_OUTCOME.get(evaluation.status),
+        "evaluation_status": evaluation.status,
+        "reached_step_limit": evaluation.flags.get("reached_step_limit"),
+        "produced_final_output": evaluation.flags.get("produced_final_output"),
+        "tool_requests": evaluation.metrics.get("tool_requests"),
+        "tool_executions": evaluation.metrics.get("tool_executions"),
+        "policy_denials": evaluation.decisions.get("deny"),
+        "policy_approvals_required": evaluation.decisions.get("require_approval"),
+        "tool_results_ok": evaluation.tool_results.get("ok"),
+        "tool_results_denied": evaluation.tool_results.get("denied"),
+        "tool_results_pending_approval": evaluation.tool_results.get(
+            "pending_approval"
+        ),
+        "requested_tools": tuple(sorted(evaluation.tool_calls)),
+        "output_contains": output,
+    }
+
+
 __all__ = [
     "ScenarioStatus",
     "ExpectedObservation",
@@ -278,4 +331,6 @@ __all__ = [
     "ScenarioOutcome",
     "Scenario",
     "DeclarativeScenario",
+    "observation_checks",
+    "observations_from_evaluation",
 ]

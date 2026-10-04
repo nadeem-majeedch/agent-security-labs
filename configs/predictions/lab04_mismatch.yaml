@@ -1,0 +1,12 @@
+# A deliberately WRONG prediction for LAB-04, used to show what a mismatch looks
+# like. It expects the out-of-scope write to *execute* — but the least-privilege
+# policy denies it, so the tool never runs. The honest result is a mismatch:
+#
+#   agentsec predict runs/lab04_tool_misuse/trace.jsonl \
+#     configs/predictions/lab04_mismatch.yaml
+#
+# A mismatch is an experimental result, not a failure: it is exactly the signal
+# that the prediction did not match the trace. Nothing here rates or judges the
+# run.
+tool_executions: 1
+tool_results_denied: 1

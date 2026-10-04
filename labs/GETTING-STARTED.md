@@ -215,7 +215,56 @@ Both labs are explained on their own pages — see
 **[LAB-01](LAB-01-benign-agent/README.md)** and
 **[LAB-05](LAB-05-require-approval/README.md)**.
 
-## 9. Check your setup stays healthy
+## 9. Predict before you run
+
+Every step so far looked at a trace **after** it existed. This one reverses the
+order: state what you expect **before** you look. A *prediction* is a small YAML
+document of observable expectations — the same vocabulary a lab's own
+`scenario.yaml` uses — checked against a trace with `agentsec predict`.
+
+```bash
+# 1. Run the lab, producing its trace.
+PYTHONPATH=src py -m agentsec run labs/LAB-04-tool-misuse/config.yaml
+
+# 2. Check your prediction against that trace.
+PYTHONPATH=src py -m agentsec predict \
+  runs/lab04_tool_misuse/trace.jsonl \
+  configs/predictions/lab04.yaml
+```
+
+`configs/predictions/lab04.yaml` predicts the boundary this lab teaches: the
+out-of-scope write is **denied**, so nothing **executes** and the tool result is
+`denied`.
+
+1. **Read the lab, then predict.** From the LAB-04 description, write down which
+   policy decision you expect, whether the tool should execute and what state the
+   tool result will be in — *before* you run anything.
+2. **Run, then check.** `agentsec run` produces the trace; `agentsec predict`
+   compares it against your prediction and prints each field as `predicted` /
+   `observed` / `MATCH` or `MISMATCH`.
+3. **Try a wrong prediction on purpose.** `configs/predictions/lab04_mismatch.yaml`
+   deliberately expects `tool_executions: 1`. The output shows a clean mismatch —
+   the denied call never ran. A mismatch is **not a failure**; it is exactly the
+   signal that your prediction did not match the trace.
+4. **Predict the injection lab — and be surprised.**
+   `configs/predictions/lab02_expect_denied.yaml` guesses that a hostile
+   instruction is refused. It is not: run LAB-02 and check. Report the mismatch
+   rather than assuming.
+5. **Reflect.**
+   - Which expectation was hardest to predict before reading the trace, and why?
+   - When your prediction matched, what did that *actually* establish?
+   - When it clashed, was the prediction wrong or the trace surprising?
+   - How is predicting against one trace different from *comparing* two?
+
+> A prediction match does **not** establish security, correctness or
+> effectiveness; it only means the trace agreed with the fields you named. A
+> mismatch is not a failed experiment — it is an observation that your prediction
+> did not match the trace.
+
+The lab itself is worked through on its own page — see
+**[LAB-04-tool-misuse](LAB-04-tool-misuse/README.md)**.
+
+## 10. Check your setup stays healthy
 
 ```bash
 PYTHONPATH=src py -m agentsec labs check

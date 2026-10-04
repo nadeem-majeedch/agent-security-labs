@@ -9,8 +9,9 @@ reference or the per-lab pages. Phase 7H added the companion
 under two policies and compares the traces, Phase 7K added a "Try a cross-lab
 comparison" step that compares two *different* labs (LAB-01 and LAB-02), and
 Phase 7L added its companion, "Compare two labs that differ" (LAB-01 and LAB-05),
-which shows a comparison with a real structural difference. Nothing in the
-runtime was added.
+which shows a comparison with a real structural difference, and Phase 8 added
+"Predict before you run", which checks a learner's prediction against a trace
+with the read-only `agentsec predict` command.
 
 These tests pin the things that make those steps useful and that no other check
 covers -- ``mkdocs build --strict`` validates links but not that the exercises
@@ -99,6 +100,15 @@ DIFFERING_LINKS = (
     "LAB-01-benign-agent/README.md",
     "LAB-05-require-approval/README.md",
 )
+
+#: The heading of the predict-before-you-run step (Phase 8).
+PREDICT_SECTION_HEADING = "## 9. Predict before you run"
+#: The predict invocation, trace and prediction the step must document.
+PREDICT_MARKER = "PYTHONPATH=src py -m agentsec predict"
+PREDICT_TRACE = "runs/lab04_tool_misuse/trace.jsonl"
+PREDICT_PREDICTION = "configs/predictions/lab04.yaml"
+#: The lab page the predict step must link to.
+PREDICT_LINK = "LAB-04-tool-misuse/README.md"
 
 
 def _text() -> str:
@@ -290,3 +300,40 @@ def test_getting_started_links_both_pages_in_the_differing_comparison_section():
         assert (GETTING_STARTED.parent / link).is_file(), (
             f"the getting-started page links to `{link}`, which does not exist"
         )
+
+
+def test_getting_started_keeps_the_predict_section_heading():
+    text = _text()
+    headings = re.findall(r"^##\s+.*$", text, flags=re.MULTILINE)
+    assert PREDICT_SECTION_HEADING in headings, (
+        f"labs/GETTING-STARTED.md has no `{PREDICT_SECTION_HEADING}` section. If "
+        "the page was legitimately renumbered or retitled, update "
+        "PREDICT_SECTION_HEADING here in the same change so the exercise stays "
+        "guarded."
+    )
+
+
+def test_getting_started_documents_the_predict_command():
+    body = _section(PREDICT_SECTION_HEADING)
+    assert PREDICT_MARKER in body, (
+        "the predict step no longer documents the `agentsec predict` command"
+    )
+    assert PREDICT_TRACE in body, (
+        "the predict step no longer names the trace it checks "
+        f"(`{PREDICT_TRACE}`)"
+    )
+    assert PREDICT_PREDICTION in body, (
+        "the predict step no longer names the example prediction "
+        f"(`{PREDICT_PREDICTION}`)"
+    )
+
+
+def test_getting_started_links_the_lab04_page_in_the_predict_section():
+    body = _section(PREDICT_SECTION_HEADING)
+    assert PREDICT_LINK in body, (
+        "the predict step no longer links the LAB-04 page; point it at the lab "
+        "instead of duplicating it"
+    )
+    assert (GETTING_STARTED.parent / PREDICT_LINK).is_file(), (
+        f"the getting-started page links to `{PREDICT_LINK}`, which does not exist"
+    )

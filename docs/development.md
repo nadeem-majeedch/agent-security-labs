@@ -789,6 +789,8 @@ agentsec evaluate trace.jsonl --json
 agentsec inspect trace.jsonl                        # short trace summary
 agentsec compare trace-a.jsonl trace-b.jsonl        # read-only comparison of two traces
 agentsec compare trace-a.jsonl trace-b.jsonl --json
+agentsec predict trace.jsonl prediction.yaml        # compare a prediction against a trace
+agentsec predict trace.jsonl prediction.yaml --json
 agentsec demo lab04-two-policies                    # one-command two-policy demonstration
 agentsec labs check                                 # verify every canonical lab
 ```
@@ -813,6 +815,21 @@ fields that differ (status, policy decisions, tool results, tool calls, flags an
 warnings). It reuses `read_events` and `TraceEvaluator`, produces no score,
 ranking or judgement, and modifies neither trace. A missing or malformed trace is
 a configuration error (exit `1`), reported like `evaluate`.
+
+`agentsec predict` reads an existing trace, evaluates it with the existing
+`TraceEvaluator`, and compares the result against a *prediction* — a small YAML
+document of observable expectations in the same vocabulary a lab's `scenario.yaml`
+`expected` block uses. It reuses the scenario expectation representation
+(`ExpectedObservation`), its match rules and its check record
+(`ObservationCheck`); it invents no second expectation model. It is read-only and
+never runs an experiment, executes a tool or mutates the trace, and it produces
+no score, threshold, confidence, risk or ranking — a match is *not* evidence of
+security, correctness or effectiveness. Each configured expectation is printed as
+`predicted` / `observed` / `MATCH` or `MISMATCH`. A **mismatch exits `0`**: it is
+an experimental result, not a CLI failure. Only a missing or malformed trace or
+prediction is a configuration error (exit `1`), reported like `evaluate`. Add
+`--json` for one deterministic document (no timestamps, absolute paths, host
+details or generated ids).
 
 `agentsec demo lab04-two-policies` is a small read-only teaching helper: it runs
 the same LAB-04 scenario under two policies (permissive and least-privilege) into
