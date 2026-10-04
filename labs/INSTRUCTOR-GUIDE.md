@@ -267,8 +267,9 @@ Reinforce these repeatedly; they are the spine of the whole sequence.
 
 ## 6. Using the exercise set
 
-`TRACE-READING-EXERCISES.md` has 36 numbered exercises (sets A–G) plus a final
-integrated challenge, ordered beginner → intermediate.
+`TRACE-READING-EXERCISES.md` has 48 numbered exercises (sets A–I), a per-lab
+"what if" stretch section and a final integrated challenge, ordered beginner →
+intermediate.
 
 Suggested classroom uses:
 

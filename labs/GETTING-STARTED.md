@@ -369,10 +369,9 @@ from step 5, but now read through `compare`.
 > **Weak:** "the two traces will be different." It is true but unfalsifiable — no
 > observation could contradict it.
 
-> **Useful:** "under the permissive policy the request is allowed and the tool
-> **executes**; under least privilege it is denied and the tool **does not
-> execute**, so the traces differ by one event." This names observations you can
-> check against the actual output.
+> **Useful:** "one trace will have a field the other lacks, or an evaluator count
+> will differ by a specific amount." It names an observable difference you can
+> check against the actual output, and it commits to no cause and no ranking.
 
 A prediction is worth writing only if the comparison could **disprove** it.
 
@@ -405,11 +404,11 @@ PYTHONPATH=src py -m agentsec compare \
 
 ### D. Verify
 
-Check your prediction against the output, field by field:
+Check each predicted field against the comparison output, and record whether the
+observed difference matches your prediction:
 
 - the **event counts** and the count delta;
-- the **event-type distribution** (does one run have a `tool_executed` the other
-  lacks?);
+- the **event-type distribution** (which event types differ, and by how many);
 - the **sequence** differences (aligned by position only);
 - the **evaluator differences** (`decisions`, `tool_results`).
 
@@ -441,6 +440,19 @@ LAB-04 is worked through on its own page — see
 > `runs/lab04_tool_misuse_allow_all/trace.jsonl`, which sits under the untracked
 > `runs/` directory. When you have finished, remove it with
 > `rm -rf runs/lab04_tool_misuse_allow_all`.
+
+### Going further: adjudicate competing claims
+
+The steps above ask you to write **one** prediction and compare. The next thing a
+reader can practise is harder: taking a mixed set of *competing statements* about
+two runs and deciding **what kind of statement each one is** — a prediction, an
+observation, a bounded interpretation, or a claim the evidence cannot support —
+and justifying each decision from the trace.
+
+That is the **claim-adjudication** exercise, not another comparison:
+[`PREDICTION-ADJUDICATION-CHALLENGE.md`](PREDICTION-ADJUDICATION-CHALLENGE.md)
+uses the LAB-05 approval-vs-deny pair you met in step 6 and the prediction and
+comparison commands you have just used.
 
 ## 12. Check your setup stays healthy
 
