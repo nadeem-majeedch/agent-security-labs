@@ -792,6 +792,8 @@ agentsec compare trace-a.jsonl trace-b.jsonl        # read-only comparison of tw
 agentsec compare trace-a.jsonl trace-b.jsonl --json
 agentsec predict trace.jsonl prediction.yaml        # compare a prediction against a trace
 agentsec predict trace.jsonl prediction.yaml --json
+agentsec experiment configs/experiments/lab04-policy-intervention.yaml   # run a controlled experiment
+agentsec experiment configs/experiments/lab04-policy-intervention.yaml --json
 agentsec demo lab04-two-policies                    # one-command two-policy demonstration
 agentsec labs check                                 # verify every canonical lab
 ```
@@ -831,6 +833,26 @@ an experimental result, not a CLI failure. Only a missing or malformed trace or
 prediction is a configuration error (exit `1`), reported like `evaluate`. Add
 `--json` for one deterministic document (no timestamps, absolute paths, host
 details or generated ids).
+
+`agentsec experiment <spec.yaml>` is a **thin** interface over the controlled
+experiment runner: it loads and validates an experiment specification with the
+existing specification model, wires the same deterministic MVP stack the demo
+uses into the runner's injected `execute(config)` callback, and renders the
+returned `ExperimentResult`. It contains no experiment logic of its own - the
+runner owns control/treatment derivation, the held-constant check, both runs,
+trace loading, observation evaluation and comparison - and it writes nothing to
+the repository (both runs happen in a temporary directory). The text output
+reports the experiment identity, the two run summaries, expected changes and
+invariants with their observed results, the observed difference, the final
+experiment state, the claim and the bounded interpretation note. Every experiment
+state - `changes_observed`, `changes_not_observed`, `invariant_violated` and
+even `execution_failed` - is a *result*, so the command exits `0`; only a
+specification/configuration problem is a configuration error (exit `1`), and an
+unexpected orchestration failure is exit `2` (never reported as
+`changes_not_observed`). Add `--json` for one deterministic document: the
+serialized `ExperimentResult` itself, which is the single schema authority (no
+second schema, no timestamps, absolute or temporary paths, scores or causal
+claims).
 
 `agentsec demo lab04-two-policies` is a small read-only teaching helper: it runs
 the same LAB-04 scenario under two policies (permissive and least-privilege) into

@@ -38,6 +38,11 @@ from .demo import LAB04_TWO_POLICIES, demo_to_dict, render_demo, run_demo
 from .errors import ConfigError, EvaluationError
 from .eval import EvaluationInput, EvaluationResult, TraceEvaluator
 from .experiment import ExperimentConfig, ExperimentResult, load_experiment_config
+from .experiment_lab import (
+    load_experiment_spec,
+    render_experiment,
+    run_controlled_experiment,
+)
 from .mvp import build_mvp_runner
 from .prediction import check_prediction, render_prediction
 from .selfcheck import check_labs, render_report, report_to_dict
@@ -110,6 +115,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     demo.add_argument("--json", action="store_true", help="emit the demonstration as JSON")
     demo.set_defaults(func=_cmd_demo)
+
+    experiment = sub.add_parser(
+        "experiment",
+        help="run a controlled experiment from a specification (read-only)",
+    )
+    experiment.add_argument("spec", help="path to an experiment specification (YAML)")
+    experiment.add_argument("--json", action="store_true", help="emit the result as JSON")
+    experiment.set_defaults(func=_cmd_experiment)
 
     labs = sub.add_parser("labs", help="reproducibility utilities for the student labs")
     labs_sub = labs.add_subparsers(dest="labs_command")
@@ -248,6 +261,34 @@ def _cmd_demo(args: argparse.Namespace) -> int:
 
 def _run_demo_config(config: ExperimentConfig) -> None:
     """Run one demonstration configuration through the existing MVP stack."""
+    runner = build_mvp_runner(config)
+    runner.run(config)
+
+
+def _cmd_experiment(args: argparse.Namespace) -> int:
+    """Run a controlled experiment and print its descriptive result.
+
+    Thin wiring only: it loads and validates the specification, then hands the
+    real execution function to the Phase 11D runner, which owns control/treatment
+    derivation, the held-constant check, both runs, trace loading, evaluation and
+    comparison. The two runs happen in a temporary directory, so the repository is
+    never written to.
+
+    Every experiment state - including ``execution_failed`` - is a *result*, so
+    the command exits ``0``; only a specification/configuration problem (exit
+    ``1``) or an unexpected orchestration failure (exit ``2``) is an error.
+    """
+    spec = load_experiment_spec(args.spec)
+    result = run_controlled_experiment(spec, execute=_run_experiment_config)
+    if args.json:
+        print(result.model_dump_json(indent=2))
+    else:
+        print(render_experiment(result))
+    return EXIT_OK
+
+
+def _run_experiment_config(config: ExperimentConfig) -> None:
+    """Run one experiment configuration through the existing MVP stack."""
     runner = build_mvp_runner(config)
     runner.run(config)
 

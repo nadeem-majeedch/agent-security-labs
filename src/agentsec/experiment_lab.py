@@ -620,6 +620,116 @@ def run_controlled_experiment(
     )
 
 
+# -- rendering -----------------------------------------------------------------
+def _value(value: Any) -> str:
+    """A deterministic, readable rendering of a single result value."""
+    if value is None:
+        return "-"
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, (list, tuple, dict)):
+        import json
+
+        return json.dumps(list(value) if isinstance(value, tuple) else value, ensure_ascii=False, sort_keys=True)
+    return str(value)
+
+
+def _render_run(lines: list[str], label: str, summary: RunSummary | None) -> None:
+    lines.append(label)
+    if summary is None:
+        lines.append("  (not completed)")
+    else:
+        lines.append(f"  policy: {summary.policy}")
+        lines.append(f"  status: {summary.status}")
+        lines.append(f"  run_id: {summary.trace.run_id or '-'}")
+        lines.append(f"  scenario: {summary.trace.scenario or '-'}")
+        lines.append(f"  events: {summary.trace.event_count}")
+    lines.append("")
+
+
+def _render_difference(comparison: dict[str, Any] | None) -> list[str]:
+    if comparison is None:
+        return ["  (unavailable)"]
+    trace_a = comparison["trace_a"]
+    trace_b = comparison["trace_b"]
+    lines = [
+        f"  events: A={trace_a['event_count']} B={trace_b['event_count']} "
+        f"delta={comparison['event_count_delta']:+d}"
+    ]
+    differences = comparison["evaluator"]["differences"]
+    if differences:
+        for difference in differences:
+            lines.append(
+                f"  {difference['section']}.{difference['key']}: "
+                f"{_value(difference['a'])} -> {_value(difference['b'])}"
+            )
+    else:
+        lines.append("  no evaluator differences")
+    return lines
+
+
+def render_experiment(result: ExperimentResult) -> str:
+    """Render an :class:`ExperimentResult` as concise, deterministic text.
+
+    Every value comes from the result; nothing is executed and nothing is
+    written. The output contains no timestamps, temporary or absolute paths,
+    scores, rankings or causal claims beyond the bounded note.
+    """
+    title = "controlled experiment"
+    lines: list[str] = [title, "=" * len(title), ""]
+    lines.append(f"experiment: {result.experiment_id}")
+    if result.title:
+        lines.append(f"title: {result.title}")
+    lines.append(f"hypothesis: {result.hypothesis}")
+    lines.append("")
+
+    _render_run(lines, "control", result.control)
+    _render_run(lines, "treatment", result.treatment)
+
+    lines.append("expected changes")
+    if result.expected_changes:
+        for change in result.expected_changes:
+            mark = "OBSERVED" if change.observed else "NOT OBSERVED"
+            lines.append(
+                f"  {change.name}: expected={_value(change.expected)} "
+                f"control={_value(change.control_observed)} "
+                f"treatment={_value(change.treatment_observed)}  {mark}"
+            )
+    else:
+        lines.append("  none")
+    lines.append("")
+
+    lines.append("expected invariants")
+    if result.expected_invariants:
+        for invariant in result.expected_invariants:
+            mark = "HELD" if invariant.held else "VIOLATED"
+            lines.append(
+                f"  {invariant.name}: expected={_value(invariant.expected)} "
+                f"control={_value(invariant.control_observed)} "
+                f"treatment={_value(invariant.treatment_observed)}  {mark}"
+            )
+    else:
+        lines.append("  none")
+    lines.append("")
+
+    lines.append("observed difference")
+    lines.extend(_render_difference(result.comparison))
+    lines.append("")
+
+    lines.append(f"state: {result.status.value}")
+    lines.append("")
+    lines.append("claim:")
+    lines.append(f"  {result.claim}" if result.claim else "  (none provided)")
+    lines.append("")
+    lines.append("boundary:")
+    for note in result.notes:
+        lines.append(f"  {note}")
+    if result.error:
+        lines.append("")
+        lines.append(f"error: {result.error}")
+    return "\n".join(lines)
+
+
 __all__ = [
     "BOUNDED_NOTE",
     "EXPERIMENT_SPEC_SCHEMA_VERSION",
@@ -637,6 +747,7 @@ __all__ = [
     "assert_held_constant",
     "load_experiment_spec",
     "parse_experiment_spec",
+    "render_experiment",
     "run_controlled_experiment",
     "validate_experiment_files",
 ]
