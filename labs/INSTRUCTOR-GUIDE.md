@@ -291,6 +291,13 @@ The **answer key is instructor-only** : keep
 [`TRACE-READING-EXERCISES-ANSWER-KEY.md`](TRACE-READING-EXERCISES-ANSWER-KEY.md)
 out of student handouts.
 
+The [controlled-experiments learning module](CONTROLLED-EXPERIMENTS.md) is a
+self-contained exercise of the same kind, one level more formal: students read a
+specification, commit to an expected outcome, run one controlled comparison with
+`agentsec experiment`, and explain the result while withholding any causal or
+ranking claim. Its [answer key](CONTROLLED-EXPERIMENTS-ANSWER-KEY.md) is likewise
+instructor-only.
+
 ---
 
 ## 7. Suggested marking rubric
@@ -404,6 +411,8 @@ No deployment, network, credentials or external services are required.
 | [`TRACE-WALKTHROUGHS.md`](TRACE-WALKTHROUGHS.md) | Students | Event-by-event walkthrough of each real trace. |
 | [`TRACE-READING-EXERCISES.md`](TRACE-READING-EXERCISES.md) | Students | Practice reading traces (no answers). |
 | [`TRACE-READING-EXERCISES-ANSWER-KEY.md`](TRACE-READING-EXERCISES-ANSWER-KEY.md) | **Instructors only** | Answers, evidence and marking guidance for the exercises. |
+| [`CONTROLLED-EXPERIMENTS.md`](CONTROLLED-EXPERIMENTS.md) | Students | Controlled-experiment module: control/treatment, the held-constant invariant, the four result states and a worked LAB-04 example. |
+| [`CONTROLLED-EXPERIMENTS-ANSWER-KEY.md`](CONTROLLED-EXPERIMENTS-ANSWER-KEY.md) | **Instructors only** | Expected values and marking guidance for the controlled-experiment exercise. |
 | `LAB-0X-.../README.md` | Students | Per-lab commands, questions and checklist. |
 | `docs/development.md` | Instructors | Repository status and the Phase 17 research boundary. |
 

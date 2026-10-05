@@ -48,6 +48,7 @@ nav:
   - Trace Field Reference: TRACE-FIELD-REFERENCE.md
   - Practice: TRACE-READING-EXERCISES.md
   - Prediction Adjudication: PREDICTION-ADJUDICATION-CHALLENGE.md
+  - Controlled Experiments: CONTROLLED-EXPERIMENTS.md
   - Instructor Guide: INSTRUCTOR-GUIDE.md
   - Local Verification:
       - agentsec labs check: LOCAL-VERIFICATION.md

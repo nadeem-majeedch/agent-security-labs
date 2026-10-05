@@ -193,6 +193,10 @@ Then:
   and the event vocabulary.
 - **[`labs/LOCAL-VERIFICATION.md`](labs/LOCAL-VERIFICATION.md)** — what
   `agentsec labs check` verifies and what it deliberately does **not** claim.
+- **[`labs/CONTROLLED-EXPERIMENTS.md`](labs/CONTROLLED-EXPERIMENTS.md)** — a
+  learning module on controlled experiments: control/treatment, the
+  held-constant invariant, the four result states of `agentsec experiment`, and a
+  worked LAB-04 example.
 - **[`labs/INSTRUCTOR-GUIDE.md`](labs/INSTRUCTOR-GUIDE.md)** — instructor-facing
   teaching material: sequence, timings, discussion prompts and a marking rubric
   (it does not contain the exercise answers).
@@ -224,7 +228,7 @@ Re-run locally at this revision:
 | Release readiness (all gates) | `py scripts/release_check.py` | **READY WITH WARNINGS** (exit 0) |
 | Licence metadata and file coverage | `py scripts/check_licensing.py` | **9/9 checks pass** (exit 0) |
 | Version consistency | `py scripts/check_version.py` | **3/3 checks pass** (exit 0) |
-| Test suite | `PYTHONPATH=src py -m pytest` | **1276 tests pass** (exit 0) |
+| Test suite | `PYTHONPATH=src py -m pytest` | **1286 tests pass** (exit 0) |
 | Lab self-check | `PYTHONPATH=src py -m agentsec labs check` | **8/8 labs pass** (exit 0) |
 | Documentation build | `py -m mkdocs build --strict` | **builds with no warnings or errors** (exit 0) |
 

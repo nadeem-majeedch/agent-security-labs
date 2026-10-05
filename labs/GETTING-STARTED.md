@@ -454,6 +454,16 @@ That is the **claim-adjudication** exercise, not another comparison:
 uses the LAB-05 approval-vs-deny pair you met in step 6 and the prediction and
 comparison commands you have just used.
 
+### Going further: run a controlled experiment end to end
+
+Everything above compares two runs you produced **separately**. The next step is
+stricter: declare, in advance and in one file, that *only one thing* may differ
+between the two runs, state what you expect to **change** and what you expect to
+**stay the same**, then let a single command run both sides and report the result.
+That is a **controlled experiment**, and it is taught in the
+[controlled-experiments learning module](CONTROLLED-EXPERIMENTS.md) with the
+`agentsec experiment` command and a worked LAB-04 example.
+
 ## 12. Check your setup stays healthy
 
 ```bash

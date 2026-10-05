@@ -273,6 +273,19 @@ without looking at the source, that lab is complete. Move on to the next one.
 
 ---
 
+## Controlled experiments
+
+A **controlled experiment** is a stricter comparison than `compare`: one file
+declares exactly what may differ between two runs, what is expected to **change**
+and what is expected to **stay the same**, and then a single command runs both
+sides. The [controlled-experiments learning module](CONTROLLED-EXPERIMENTS.md)
+explains the vocabulary (control/treatment, the held-constant invariant, the four
+result states) and works through the shipped LAB-04 policy-intervention example
+with the `agentsec experiment` command. It produces no score, ranking or security
+claim.
+
+---
+
 ## Lab self-check
 
 One command verifies that the labs still behave as documented: it re-runs
