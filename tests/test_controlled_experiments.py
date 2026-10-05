@@ -56,6 +56,15 @@ def _student() -> str:
     return STUDENT.read_text(encoding="utf-8")
 
 
+def _worked_example_block() -> str:
+    """The fenced human-output example under §11's "### The result"."""
+    text = _student()
+    anchor = text.index("### The result")
+    start = text.index("```text\n", anchor) + len("```text\n")
+    end = text.index("\n```", start)
+    return text[start:end]
+
+
 def test_module_and_answer_key_files_exist():
     assert STUDENT.is_file(), "labs/CONTROLLED-EXPERIMENTS.md is missing"
     assert ANSWER_KEY.is_file(), "labs/CONTROLLED-EXPERIMENTS-ANSWER-KEY.md is missing"
@@ -122,6 +131,27 @@ def test_getting_started_points_to_the_module():
     assert "CONTROLLED-EXPERIMENTS.md" in GETTING_STARTED.read_text(encoding="utf-8"), (
         "the getting-started path no longer points at the controlled-experiments "
         "module"
+    )
+
+
+def test_worked_example_output_matches_the_renderer(monkeypatch, capsys):
+    """The §11 result block must stay byte-identical to the real command output.
+
+    The worked example is the module's fidelity anchor: a reader pastes the
+    command and should see exactly what the page shows. Running the real command
+    in-process (the same interface the reader uses) and comparing against the
+    fenced block catches both renderer drift and documentation-only edits, which
+    the section-presence guards above cannot see.
+    """
+    from agentsec.cli import main
+
+    monkeypatch.chdir(ROOT)
+    assert main(["experiment", SPEC]) == 0
+    actual = capsys.readouterr().out.replace("\r\n", "\n").rstrip("\n")
+    assert actual == _worked_example_block(), (
+        "labs/CONTROLLED-EXPERIMENTS.md §11 no longer matches the real "
+        "`agentsec experiment` output; update the worked example to match the "
+        "renderer"
     )
 
 

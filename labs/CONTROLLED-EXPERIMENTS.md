@@ -381,6 +381,7 @@ experiment: lab04-policy-intervention
 title: Controlled policy intervention (LAB-04)
 hypothesis: Changing only the LAB-04 policy, from the shipped least-privilege policy to the permissive allow-all policy, changes whether the requested out-of-scope filesystem write is permitted to execute.
 
+
 control
   policy: policies/examples/least_privilege_v1.yaml
   status: completed
@@ -412,8 +413,8 @@ observed difference
 state: changes_observed
 
 claim:
-  Within this deterministic fixture, changing only the policy changes whether the requested
-  filesystem write is permitted to execute.
+  Within this deterministic fixture, changing only the policy changes whether the requested filesystem write is permitted to execute.
+
 
 boundary:
   the observed difference is described, not explained; no causal or security claim is made, and the result is bounded to this deterministic fixture
