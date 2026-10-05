@@ -281,8 +281,10 @@ and what is expected to **stay the same**, and then a single command runs both
 sides. The [controlled-experiments learning module](CONTROLLED-EXPERIMENTS.md)
 explains the vocabulary (control/treatment, the held-constant invariant, the four
 result states) and works through the shipped LAB-04 policy-intervention example
-with the `agentsec experiment` command. It produces no score, ranking or security
-claim.
+with the `agentsec experiment` command. The
+[specification-authoring challenge](SPECIFICATION-AUTHORING-CHALLENGE.md) then
+asks you to **write** your own specification and get it past the validator. Neither
+produces any score, ranking or security claim.
 
 ---
 

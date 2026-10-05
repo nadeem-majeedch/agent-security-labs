@@ -49,6 +49,7 @@ nav:
   - Practice: TRACE-READING-EXERCISES.md
   - Prediction Adjudication: PREDICTION-ADJUDICATION-CHALLENGE.md
   - Controlled Experiments: CONTROLLED-EXPERIMENTS.md
+  - Specification Authoring: SPECIFICATION-AUTHORING-CHALLENGE.md
   - Instructor Guide: INSTRUCTOR-GUIDE.md
   - Local Verification:
       - agentsec labs check: LOCAL-VERIFICATION.md

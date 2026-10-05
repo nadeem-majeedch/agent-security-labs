@@ -464,6 +464,12 @@ That is a **controlled experiment**, and it is taught in the
 [controlled-experiments learning module](CONTROLLED-EXPERIMENTS.md) with the
 `agentsec experiment` command and a worked LAB-04 example.
 
+Once you can read a specification and run it, the next step is to **write** one.
+The [specification-authoring challenge](SPECIFICATION-AUTHORING-CHALLENGE.md)
+asks you to author your own specification for LAB-05, get it past the validator,
+predict the outcome and explain the result — while keeping a **design error**
+(exit `1`) apart from the four experiment **result** states (exit `0`).
+
 ## 12. Check your setup stays healthy
 
 ```bash

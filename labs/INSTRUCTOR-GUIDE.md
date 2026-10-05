@@ -298,6 +298,13 @@ specification, commit to an expected outcome, run one controlled comparison with
 ranking claim. Its [answer key](CONTROLLED-EXPERIMENTS-ANSWER-KEY.md) is likewise
 instructor-only.
 
+The [specification-authoring challenge](SPECIFICATION-AUTHORING-CHALLENGE.md) is
+the authoring counterpart: students write their own specification for LAB-05, get
+it past the validator, predict the outcome and explain the result, keeping a
+**design error** (exit `1`) apart from the four experiment **result** states (exit
+`0`). Its
+[answer key](SPECIFICATION-AUTHORING-CHALLENGE-ANSWER-KEY.md) is instructor-only.
+
 ---
 
 ## 7. Suggested marking rubric
@@ -413,6 +420,8 @@ No deployment, network, credentials or external services are required.
 | [`TRACE-READING-EXERCISES-ANSWER-KEY.md`](TRACE-READING-EXERCISES-ANSWER-KEY.md) | **Instructors only** | Answers, evidence and marking guidance for the exercises. |
 | [`CONTROLLED-EXPERIMENTS.md`](CONTROLLED-EXPERIMENTS.md) | Students | Controlled-experiment module: control/treatment, the held-constant invariant, the four result states and a worked LAB-04 example. |
 | [`CONTROLLED-EXPERIMENTS-ANSWER-KEY.md`](CONTROLLED-EXPERIMENTS-ANSWER-KEY.md) | **Instructors only** | Expected values and marking guidance for the controlled-experiment exercise. |
+| [`SPECIFICATION-AUTHORING-CHALLENGE.md`](SPECIFICATION-AUTHORING-CHALLENGE.md) | Students | Author your own controlled-experiment specification for LAB-05 and see the validator reject an uncontrolled design. |
+| [`SPECIFICATION-AUTHORING-CHALLENGE-ANSWER-KEY.md`](SPECIFICATION-AUTHORING-CHALLENGE-ANSWER-KEY.md) | **Instructors only** | Reference specification, expected values and validator messages for the authoring challenge. |
 | `LAB-0X-.../README.md` | Students | Per-lab commands, questions and checklist. |
 | `docs/development.md` | Instructors | Repository status and the Phase 17 research boundary. |
 
