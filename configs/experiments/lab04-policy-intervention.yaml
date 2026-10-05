@@ -1,0 +1,49 @@
+# Controlled policy intervention for LAB-04 (Tool Misuse).
+#
+# This is an experiment *specification*: a hypothesis plus exactly one declared
+# intervention (the policy), a shared base scenario, the observations expected
+# to change, the observations expected to stay the same, and the alternative
+# explanations the author considered.
+#
+# Both runs derive from the same base config, so everything except the policy is
+# held constant: same scenario, same task, same tools, same deterministic model.
+#
+# Validated (never executed) by `agentsec.experiment_lab`.
+schema_version: "1"
+experiment_id: lab04-policy-intervention
+title: Controlled policy intervention (LAB-04)
+
+hypothesis: >
+  Changing only the LAB-04 policy, from the shipped least-privilege policy to the
+  permissive allow-all policy, changes whether the requested out-of-scope
+  filesystem write is permitted to execute.
+
+# The shared base run; control and treatment are both derived from it.
+base_config: labs/LAB-04-tool-misuse/config.yaml
+
+# Exactly one intervention. The policy is the only thing the specification lets
+# change between control and treatment.
+intervention:
+  type: policy
+  control_policy: policies/examples/least_privilege_v1.yaml
+  treatment_policy: policies/examples/allow_all_v1.yaml
+
+# Expected to change: under the permissive policy the tool actually executes;
+# under least privilege it does not.
+expected_changes:
+  tool_executions: 1
+
+# Expected to stay the same in both runs.
+expected_invariants:
+  requested_tools: ["fs_sandbox"]
+  produced_final_output: true
+
+# The author must acknowledge at least one alternative explanation.
+alternative_explanations:
+  - the difference is a property of this deterministic fixture, not of any real model
+  - the scenario, task and tools were held constant, so they do not explain the change
+
+# A bounded conclusion (echoed, never machine-judged).
+claim: >
+  Within this deterministic fixture, changing only the policy changes whether the
+  requested filesystem write is permitted to execute.

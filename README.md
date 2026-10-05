@@ -224,7 +224,7 @@ Re-run locally at this revision:
 | Release readiness (all gates) | `py scripts/release_check.py` | **READY WITH WARNINGS** (exit 0) |
 | Licence metadata and file coverage | `py scripts/check_licensing.py` | **9/9 checks pass** (exit 0) |
 | Version consistency | `py scripts/check_version.py` | **3/3 checks pass** (exit 0) |
-| Test suite | `PYTHONPATH=src py -m pytest` | **1205 tests pass** (exit 0) |
+| Test suite | `PYTHONPATH=src py -m pytest` | **1261 tests pass** (exit 0) |
 | Lab self-check | `PYTHONPATH=src py -m agentsec labs check` | **8/8 labs pass** (exit 0) |
 | Documentation build | `py -m mkdocs build --strict` | **builds with no warnings or errors** (exit 0) |
 
