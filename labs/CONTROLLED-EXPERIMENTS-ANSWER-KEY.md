@@ -8,7 +8,7 @@ This key accompanies `CONTROLLED-EXPERIMENTS.md`. Every value below is grounded 
 the **real** shipped experiment, produced by:
 
 ```bash
-PYTHONPATH=src py -m agentsec experiment configs/experiments/lab04-policy-intervention.yaml
+agentsec experiment configs/experiments/lab04-policy-intervention.yaml
 ```
 
 The central teaching point is the same as the prediction-adjudication challenge's:
@@ -74,7 +74,7 @@ A wrong prediction is a *result*, not a failure.
 ### C. Run
 
 ```bash
-PYTHONPATH=src py -m agentsec experiment configs/experiments/lab04-policy-intervention.yaml
+agentsec experiment configs/experiments/lab04-policy-intervention.yaml
 ```
 
 ### D. Inspect control and treatment

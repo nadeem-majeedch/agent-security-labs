@@ -890,8 +890,10 @@ The console entry point is declared in `pyproject.toml`:
 agentsec = "agentsec.cli:main"
 ```
 
-Until the package is installed, it is also runnable from a checkout with
-`PYTHONPATH=src py -m agentsec ...`.
+Once installed, the examples throughout this repository use the `agentsec`
+console command. If your shell cannot find it, run the same commands as
+`python -m agentsec ...` (or `py -m agentsec ...` on Windows); from a checkout
+without an install, put `src` on `PYTHONPATH` and run `python -m agentsec ...`.
 
 ## Note on the repository README
 

@@ -11,10 +11,10 @@ It teaches **one** new command:
 
 ```bash
 # a controlled experiment, described by a specification file
-PYTHONPATH=src py -m agentsec experiment configs/experiments/lab04-policy-intervention.yaml
+agentsec experiment configs/experiments/lab04-policy-intervention.yaml
 
 # the same result as deterministic machine-readable JSON
-PYTHONPATH=src py -m agentsec experiment configs/experiments/lab04-policy-intervention.yaml --json
+agentsec experiment configs/experiments/lab04-policy-intervention.yaml --json
 ```
 
 Everything you already learned still applies. This module adds the vocabulary for
@@ -267,10 +267,10 @@ The full worked output is in section 11.
 
 ```bash
 # the deterministic human-readable report
-PYTHONPATH=src py -m agentsec experiment configs/experiments/lab04-policy-intervention.yaml
+agentsec experiment configs/experiments/lab04-policy-intervention.yaml
 
 # the same result as JSON
-PYTHONPATH=src py -m agentsec experiment configs/experiments/lab04-policy-intervention.yaml --json
+agentsec experiment configs/experiments/lab04-policy-intervention.yaml --json
 ```
 
 The single argument is a path to an **experiment specification** (a small YAML
@@ -368,7 +368,7 @@ the same out-of-scope filesystem write change?*
 ### Run it
 
 ```bash
-PYTHONPATH=src py -m agentsec experiment configs/experiments/lab04-policy-intervention.yaml
+agentsec experiment configs/experiments/lab04-policy-intervention.yaml
 ```
 
 ### The result
@@ -515,7 +515,7 @@ of writing it down first.
 ### C. Run the experiment
 
 ```bash
-PYTHONPATH=src py -m agentsec experiment configs/experiments/lab04-policy-intervention.yaml
+agentsec experiment configs/experiments/lab04-policy-intervention.yaml
 ```
 
 ### D. Inspect control and treatment

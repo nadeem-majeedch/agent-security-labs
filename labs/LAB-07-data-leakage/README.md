@@ -177,19 +177,19 @@ produce.
 ### 1. Run the experiment
 
 ```bash
-PYTHONPATH=src py -m agentsec run labs/LAB-07-data-leakage/config.yaml
+agentsec run labs/LAB-07-data-leakage/config.yaml
 ```
 
 ### 2. Inspect the trace it wrote
 
 ```bash
-PYTHONPATH=src py -m agentsec inspect runs/lab07_data_leakage/trace.jsonl
+agentsec inspect runs/lab07_data_leakage/trace.jsonl
 ```
 
 ### 3. Evaluate the trace on its own
 
 ```bash
-PYTHONPATH=src py -m agentsec evaluate runs/lab07_data_leakage/trace.jsonl
+agentsec evaluate runs/lab07_data_leakage/trace.jsonl
 ```
 
 ### 4. Read the trace as raw data (optional)
@@ -300,7 +300,7 @@ redacted body still holds the synthetic marker. The scenario then labels the run
 To see the scenario verdict for yourself, run the lab's verification test:
 
 ```bash
-PYTHONPATH=src py -m pytest tests/labs/test_lab07.py -q
+python -m pytest tests/labs/test_lab07.py -q
 ```
 
 ## Completion checklist

@@ -46,35 +46,38 @@ Everything in this lab is local, offline and synthetic:
 ### 1. Check the package imports
 
 ```bash
-PYTHONPATH=src py -c "import agentsec; print(agentsec.__version__)"
+# Windows: use `py` instead of `python`
+python -c "import agentsec; print(agentsec.__version__)"
 ```
 
 ### 2. Check the CLI is available
 
 ```bash
-PYTHONPATH=src py -m agentsec --help
+agentsec --help
 ```
 
 ### 3. Run the setup experiment
 
 ```bash
-PYTHONPATH=src py -m agentsec run labs/LAB-00-setup/config.yaml
+agentsec run labs/LAB-00-setup/config.yaml
 ```
 
 ### 4. Look at the trace it produced
 
 ```bash
-PYTHONPATH=src py -m agentsec inspect runs/lab00_setup/trace.jsonl
+agentsec inspect runs/lab00_setup/trace.jsonl
 ```
 
 ### 5. Evaluate the trace on its own
 
 ```bash
-PYTHONPATH=src py -m agentsec evaluate runs/lab00_setup/trace.jsonl
+agentsec evaluate runs/lab00_setup/trace.jsonl
 ```
 
-> If the package is installed (`py -m pip install -e ".[dev]"`) you may drop the
-> `PYTHONPATH=src` prefix and use the `agentsec` command directly.
+> The editable install (`python -m pip install -e ".[dev]"`, or
+> `py -m pip install -e ".[dev]"` on Windows) provides the `agentsec` command.
+> If your shell cannot find it, run the same commands as `python -m agentsec …`
+> (or `py -m agentsec …` on Windows).
 
 ## What to look for
 
@@ -89,7 +92,8 @@ PYTHONPATH=src py -m agentsec evaluate runs/lab00_setup/trace.jsonl
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
-| `ModuleNotFoundError: agentsec` | `PYTHONPATH=src` missing | Prefix the command, or install with `py -m pip install -e ".[dev]"`. |
+| `ModuleNotFoundError: agentsec` | the package is not installed | Install with `python -m pip install -e ".[dev]"` (Windows: `py -m pip install -e ".[dev]"`). |
+| `agentsec: command not found` | the console script is not on your `PATH` | Run `python -m agentsec …` (Windows: `py -m agentsec …`), or reinstall. |
 | `command not found: py` | `py` is Windows-only | Use `python` instead of `py`. |
 | `could not read ... config` | Wrong working directory | Run from the repository root. |
 | `unknown mock script` | Typo in `mock_script` | Use one of the names in `agentsec.models.mock.SCRIPT_FACTORIES`. |

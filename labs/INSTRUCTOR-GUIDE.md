@@ -381,7 +381,7 @@ implementation.
 
 - [ ] Repository available to students (clone/checkout).
 - [ ] Python 3.11+ environment works (`py -m pip install -e ".[dev]"`).
-- [ ] Test suite passes (`PYTHONPATH=src py -m pytest`).
+- [ ] Test suite passes (`python -m pytest`).
 - [ ] One lab runs end to end (for example LAB-00).
 - [ ] Trace files can be generated (`runs/<run_dir>/trace.jsonl`).
 - [ ] Students can read JSON/JSONL.

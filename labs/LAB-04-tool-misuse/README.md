@@ -98,19 +98,19 @@ run should produce.
 ### 1. Run the experiment
 
 ```bash
-PYTHONPATH=src py -m agentsec run labs/LAB-04-tool-misuse/config.yaml
+agentsec run labs/LAB-04-tool-misuse/config.yaml
 ```
 
 ### 2. Inspect the trace it wrote
 
 ```bash
-PYTHONPATH=src py -m agentsec inspect runs/lab04_tool_misuse/trace.jsonl
+agentsec inspect runs/lab04_tool_misuse/trace.jsonl
 ```
 
 ### 3. Evaluate the trace on its own
 
 ```bash
-PYTHONPATH=src py -m agentsec evaluate runs/lab04_tool_misuse/trace.jsonl
+agentsec evaluate runs/lab04_tool_misuse/trace.jsonl
 ```
 
 ### 4. Read the trace as raw data (optional)
@@ -170,7 +170,7 @@ final answer. The scenario then labels the run `passed`.
 To see the scenario verdict for yourself, run the lab's verification test:
 
 ```bash
-PYTHONPATH=src py -m pytest tests/labs/test_lab04.py -q
+python -m pytest tests/labs/test_lab04.py -q
 ```
 
 ## Same lab, different policy
@@ -187,13 +187,13 @@ the output `trace_path` differ:
 
 ```bash
 # Trace A — the same lab under a permissive policy
-PYTHONPATH=src py -m agentsec run configs/examples/lab04_tool_misuse_allow_all.yaml
+agentsec run configs/examples/lab04_tool_misuse_allow_all.yaml
 
 # Trace B — the lab as shipped, under the least-privilege policy
-PYTHONPATH=src py -m agentsec run labs/LAB-04-tool-misuse/config.yaml
+agentsec run labs/LAB-04-tool-misuse/config.yaml
 
 # Compare them
-PYTHONPATH=src py -m agentsec compare \
+agentsec compare \
   runs/lab04_tool_misuse_allow_all/trace.jsonl \
   runs/lab04_tool_misuse/trace.jsonl
 ```
@@ -206,7 +206,7 @@ a temporary directory, compares the two traces, and removes them afterwards —
 nothing is written to the repository:
 
 ```bash
-PYTHONPATH=src py -m agentsec demo lab04-two-policies
+agentsec demo lab04-two-policies
 ```
 
 It runs the same scenario under `allow_all_v1` (Trace A) and the least-privilege
@@ -216,7 +216,7 @@ policy (Trace B), then prints the same factual, structural comparison produced b
 comparison), which is deterministic and contains no timestamps or paths:
 
 ```bash
-PYTHONPATH=src py -m agentsec demo lab04-two-policies --json
+agentsec demo lab04-two-policies --json
 ```
 
 `compare` reports only factual, structural differences — event counts, the

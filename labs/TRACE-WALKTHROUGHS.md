@@ -686,7 +686,7 @@ where the content moved?
 - To see a trace yourself:
 
 ```bash
-PYTHONPATH=src py -m agentsec inspect runs/lab07_data_leakage/trace.jsonl
+agentsec inspect runs/lab07_data_leakage/trace.jsonl
 ```
 
 Remember: the trace shows **what** happened — a request, a decision, an

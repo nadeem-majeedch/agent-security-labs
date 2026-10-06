@@ -65,19 +65,19 @@ observations a correct run should produce.
 ### 1. Run the experiment
 
 ```bash
-PYTHONPATH=src py -m agentsec run labs/LAB-02-direct-prompt-injection/config.yaml
+agentsec run labs/LAB-02-direct-prompt-injection/config.yaml
 ```
 
 ### 2. Inspect the trace it wrote
 
 ```bash
-PYTHONPATH=src py -m agentsec inspect runs/lab02_direct_injection/trace.jsonl
+agentsec inspect runs/lab02_direct_injection/trace.jsonl
 ```
 
 ### 3. Evaluate the trace on its own
 
 ```bash
-PYTHONPATH=src py -m agentsec evaluate runs/lab02_direct_injection/trace.jsonl
+agentsec evaluate runs/lab02_direct_injection/trace.jsonl
 ```
 
 ### 4. Read the trace as raw data (optional)
@@ -130,7 +130,7 @@ scenario then labels the run `passed`.
 To see the scenario verdict for yourself, run the lab's verification test:
 
 ```bash
-PYTHONPATH=src py -m pytest tests/labs/test_lab02.py -q
+python -m pytest tests/labs/test_lab02.py -q
 ```
 
 ## Completion checklist

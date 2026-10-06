@@ -93,19 +93,19 @@ run should produce.
 ### 1. Run the experiment
 
 ```bash
-PYTHONPATH=src py -m agentsec run labs/LAB-05-require-approval/config.yaml
+agentsec run labs/LAB-05-require-approval/config.yaml
 ```
 
 ### 2. Inspect the trace it wrote
 
 ```bash
-PYTHONPATH=src py -m agentsec inspect runs/lab05_require_approval/trace.jsonl
+agentsec inspect runs/lab05_require_approval/trace.jsonl
 ```
 
 ### 3. Evaluate the trace on its own
 
 ```bash
-PYTHONPATH=src py -m agentsec evaluate runs/lab05_require_approval/trace.jsonl
+agentsec evaluate runs/lab05_require_approval/trace.jsonl
 ```
 
 ### 4. Read the trace as raw data (optional)
@@ -164,7 +164,7 @@ scenario then labels the run `passed`.
 To see the scenario verdict for yourself, run the lab's verification test:
 
 ```bash
-PYTHONPATH=src py -m pytest tests/labs/test_lab05.py -q
+python -m pytest tests/labs/test_lab05.py -q
 ```
 
 ## Same lab, two decisions
@@ -180,13 +180,13 @@ and agent; only the `policy_path` and the output `trace_path` differ:
 
 ```bash
 # Trace A — the lab as shipped, under the least-privilege policy
-PYTHONPATH=src py -m agentsec run labs/LAB-05-require-approval/config.yaml
+agentsec run labs/LAB-05-require-approval/config.yaml
 
 # Trace B — the same lab under a deny-by-default policy
-PYTHONPATH=src py -m agentsec run configs/examples/lab05_require_approval_deny_by_default.yaml
+agentsec run configs/examples/lab05_require_approval_deny_by_default.yaml
 
 # Compare them
-PYTHONPATH=src py -m agentsec compare \
+agentsec compare \
   runs/lab05_require_approval/trace.jsonl \
   runs/lab05_require_approval_deny_by_default/trace.jsonl
 ```

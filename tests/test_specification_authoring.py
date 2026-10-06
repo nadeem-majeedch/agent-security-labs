@@ -42,7 +42,7 @@ STATES = (
 )
 
 #: The command the challenge must document, in repository convention.
-EXPERIMENT_COMMAND = "PYTHONPATH=src py -m agentsec experiment"
+EXPERIMENT_COMMAND = "agentsec experiment"
 
 #: The required specification fields the challenge must name.
 SPEC_FIELDS = (

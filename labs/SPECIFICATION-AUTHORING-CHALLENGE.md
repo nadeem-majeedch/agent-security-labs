@@ -13,7 +13,7 @@ The command is the one you already met in the
 [controlled-experiments learning module](CONTROLLED-EXPERIMENTS.md):
 
 ```bash
-PYTHONPATH=src py -m agentsec experiment <your-specification.yaml>
+agentsec experiment <your-specification.yaml>
 ```
 
 > This is a **documentation-only** exercise. You write a local YAML file; you do
@@ -153,7 +153,7 @@ and nothing executes. When it validates, the experiment runs and prints the
 `ExperimentResult`.
 
 ```bash
-PYTHONPATH=src py -m agentsec experiment lab05-authoring.yaml
+agentsec experiment lab05-authoring.yaml
 ```
 
 Record from the output:

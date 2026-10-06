@@ -9,6 +9,29 @@ need an API key, a network connection or any security background to begin.
 > not the behaviour of a real model. They are **not a benchmark** and make **no
 > research claim**. There is deliberately **no LAB-08**.
 
+### How a run works
+
+Every tool call follows one mediated path, and each step is a separate,
+parent-linked event in the trace you will read:
+
+```text
+agent task ──▶ model turn ──▶ tool_requested
+                                   │
+                                   ▼
+                             ToolGateway (validate)
+                                   │
+                                   ▼
+            policy_decision  (allow / deny / require_approval)
+                    │                            │
+           allow ───┘                  deny / require_approval
+              │                                     │
+              ▼                                     ▼
+       tool_executed                          no execution
+              │
+              ▼
+         tool_result ──▶ JSONL trace
+```
+
 ## What you need
 
 - Python 3.11 or newer (`py` on Windows, `python` elsewhere).
@@ -18,17 +41,22 @@ need an API key, a network connection or any security background to begin.
 ## 1. Install
 
 ```bash
-py -m pip install -e ".[dev]"
+# Linux / macOS:  python -m pip install -e ".[dev]"
+# Windows:        py -m pip install -e ".[dev]"
+python -m pip install -e ".[dev]"
 ```
 
-Nothing else is required: the labs run offline with the in-memory sandbox tools.
+The editable install adds the `agentsec` command used throughout these labs. If
+your shell cannot find it, run the same commands as `python -m agentsec …` (or
+`py -m agentsec …` on Windows). Nothing else is required: the labs run offline
+with the in-memory sandbox tools.
 
 ## 2. Run your first lab
 
 ```bash
-PYTHONPATH=src py -m agentsec run labs/LAB-00-setup/config.yaml
-PYTHONPATH=src py -m agentsec inspect runs/lab00_setup/trace.jsonl
-PYTHONPATH=src py -m agentsec evaluate runs/lab00_setup/trace.jsonl
+agentsec run labs/LAB-00-setup/config.yaml
+agentsec inspect runs/lab00_setup/trace.jsonl
+agentsec evaluate runs/lab00_setup/trace.jsonl
 ```
 
 The first command runs the experiment and writes a **trace**; the second lists
@@ -57,7 +85,7 @@ runs. The repository ships a one-command demonstration that runs **the same lab*
 — LAB-04 — under **two policies** and compares the two traces:
 
 ```bash
-PYTHONPATH=src py -m agentsec demo lab04-two-policies
+agentsec demo lab04-two-policies
 ```
 
 The two runs write their traces into a temporary directory that is removed when
@@ -78,7 +106,7 @@ the command finishes, so nothing is added to the repository.
    two policies plus the full comparison — intended for tooling:
 
    ```bash
-   PYTHONPATH=src py -m agentsec demo lab04-two-policies --json
+   agentsec demo lab04-two-policies --json
    ```
 
 5. **Think about why the traces differ.** Work from the trace, not an opinion:
@@ -104,13 +132,13 @@ incompatible ways: held for approval, or refused outright.
 
 ```bash
 # Trace A — LAB-05 as shipped: the read needs approval, so it is held pending
-PYTHONPATH=src py -m agentsec run labs/LAB-05-require-approval/config.yaml
+agentsec run labs/LAB-05-require-approval/config.yaml
 
 # Trace B — the same lab under a deny-by-default policy
-PYTHONPATH=src py -m agentsec run configs/examples/lab05_require_approval_deny_by_default.yaml
+agentsec run configs/examples/lab05_require_approval_deny_by_default.yaml
 
 # Compare them
-PYTHONPATH=src py -m agentsec compare \
+agentsec compare \
   runs/lab05_require_approval/trace.jsonl \
   runs/lab05_require_approval_deny_by_default/trace.jsonl
 ```
@@ -140,13 +168,13 @@ is. Run the two introductory labs and compare them:
 
 ```bash
 # Trace A — LAB-01, a benign, authorized request
-PYTHONPATH=src py -m agentsec run labs/LAB-01-benign-agent/config.yaml
+agentsec run labs/LAB-01-benign-agent/config.yaml
 
 # Trace B — LAB-02, a request with a hostile instruction injected into it
-PYTHONPATH=src py -m agentsec run labs/LAB-02-direct-prompt-injection/config.yaml
+agentsec run labs/LAB-02-direct-prompt-injection/config.yaml
 
 # Compare them
-PYTHONPATH=src py -m agentsec compare \
+agentsec compare \
   runs/lab01_benign/trace.jsonl \
   runs/lab02_direct_injection/trace.jsonl
 ```
@@ -182,13 +210,13 @@ again, this time alongside LAB-05:
 
 ```bash
 # Trace A — LAB-01, an authorized calculator request that executes
-PYTHONPATH=src py -m agentsec run labs/LAB-01-benign-agent/config.yaml
+agentsec run labs/LAB-01-benign-agent/config.yaml
 
 # Trace B — LAB-05, a database read held for approval, never executed
-PYTHONPATH=src py -m agentsec run labs/LAB-05-require-approval/config.yaml
+agentsec run labs/LAB-05-require-approval/config.yaml
 
 # Compare them
-PYTHONPATH=src py -m agentsec compare \
+agentsec compare \
   runs/lab01_benign/trace.jsonl \
   runs/lab05_require_approval/trace.jsonl
 ```
@@ -226,10 +254,10 @@ document of observable expectations — the same vocabulary a lab's own
 
 ```bash
 # 1. Run the lab, producing its trace.
-PYTHONPATH=src py -m agentsec run labs/LAB-04-tool-misuse/config.yaml
+agentsec run labs/LAB-04-tool-misuse/config.yaml
 
 # 2. Check your prediction against that trace.
-PYTHONPATH=src py -m agentsec predict \
+agentsec predict \
   runs/lab04_tool_misuse/trace.jsonl \
   configs/predictions/lab04.yaml
 ```
@@ -299,16 +327,16 @@ about the trace, not a score.
 
 ```bash
 # Trace A — LAB-01, an authorized calculator request that executes
-PYTHONPATH=src py -m agentsec run labs/LAB-01-benign-agent/config.yaml
+agentsec run labs/LAB-01-benign-agent/config.yaml
 
 # Trace B — LAB-05, a database read held for approval, never executed
-PYTHONPATH=src py -m agentsec run labs/LAB-05-require-approval/config.yaml
+agentsec run labs/LAB-05-require-approval/config.yaml
 ```
 
 ### C. Verify
 
 ```bash
-PYTHONPATH=src py -m agentsec predict \
+agentsec predict \
   runs/lab05_require_approval/trace.jsonl \
   configs/predictions/lab05_expect_approval.yaml
 ```
@@ -320,7 +348,7 @@ result, not a failure.
 ### D. Compare
 
 ```bash
-PYTHONPATH=src py -m agentsec compare \
+agentsec compare \
   runs/lab01_benign/trace.jsonl \
   runs/lab05_require_approval/trace.jsonl
 ```
@@ -388,16 +416,16 @@ Before running anything, answer in your own words:
 
 ```bash
 # Trace A — LAB-04 under a permissive policy (allow_all_v1)
-PYTHONPATH=src py -m agentsec run configs/examples/lab04_tool_misuse_allow_all.yaml
+agentsec run configs/examples/lab04_tool_misuse_allow_all.yaml
 
 # Trace B — the same lab under its shipped least-privilege policy
-PYTHONPATH=src py -m agentsec run labs/LAB-04-tool-misuse/config.yaml
+agentsec run labs/LAB-04-tool-misuse/config.yaml
 ```
 
 ### C. Compare
 
 ```bash
-PYTHONPATH=src py -m agentsec compare \
+agentsec compare \
   runs/lab04_tool_misuse_allow_all/trace.jsonl \
   runs/lab04_tool_misuse/trace.jsonl
 ```
@@ -416,7 +444,7 @@ You can also confirm each side on its own — the shipped prediction
 `configs/predictions/lab04.yaml` describes the least-privilege trace:
 
 ```bash
-PYTHONPATH=src py -m agentsec predict \
+agentsec predict \
   runs/lab04_tool_misuse/trace.jsonl \
   configs/predictions/lab04.yaml
 ```
@@ -473,7 +501,7 @@ predict the outcome and explain the result — while keeping a **design error**
 ## 12. Check your setup stays healthy
 
 ```bash
-PYTHONPATH=src py -m agentsec labs check
+agentsec labs check
 ```
 
 This re-runs every lab and confirms each still produces its declared result. See

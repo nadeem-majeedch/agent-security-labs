@@ -20,7 +20,7 @@ guessing, that is the signal to go back and read the trace again.
 3. Inspect the real traces yourself when a question says to, for example:
 
    ```bash
-   PYTHONPATH=src py -m agentsec inspect runs/lab04_tool_misuse/trace.jsonl
+   agentsec inspect runs/lab04_tool_misuse/trace.jsonl
    ```
 
 4. Answers are **not** in this file. There is a separate **instructor-only answer

@@ -48,19 +48,19 @@ scenario's expectation is machine-checked by a test (see *Expected outcome*).
 ### 1. Run the experiment
 
 ```bash
-PYTHONPATH=src py -m agentsec run labs/LAB-01-benign-agent/config.yaml
+agentsec run labs/LAB-01-benign-agent/config.yaml
 ```
 
 ### 2. Inspect the trace it wrote
 
 ```bash
-PYTHONPATH=src py -m agentsec inspect runs/lab01_benign/trace.jsonl
+agentsec inspect runs/lab01_benign/trace.jsonl
 ```
 
 ### 3. Evaluate the trace on its own
 
 ```bash
-PYTHONPATH=src py -m agentsec evaluate runs/lab01_benign/trace.jsonl
+agentsec evaluate runs/lab01_benign/trace.jsonl
 ```
 
 ### 4. Read the trace as raw data (optional)
@@ -114,7 +114,7 @@ labels the run `passed`.
 To see the scenario verdict for yourself, run the lab's verification test:
 
 ```bash
-PYTHONPATH=src py -m pytest tests/labs/test_lab01.py -q
+python -m pytest tests/labs/test_lab01.py -q
 ```
 
 `scenario.yaml` records the exact expectations; the test runs the experiment

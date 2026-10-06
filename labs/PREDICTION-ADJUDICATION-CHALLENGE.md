@@ -49,27 +49,27 @@ result of a wrong prediction is a *mismatch*, which is a result, not a failure.
 ## B. Run
 
 ```bash
-PYTHONPATH=src py -m agentsec run labs/LAB-05-require-approval/config.yaml
-PYTHONPATH=src py -m agentsec run configs/examples/lab05_require_approval_deny_by_default.yaml
+agentsec run labs/LAB-05-require-approval/config.yaml
+agentsec run configs/examples/lab05_require_approval_deny_by_default.yaml
 ```
 
 ## C. Inspect
 
 ```bash
 # a short, in-order summary of each trace
-PYTHONPATH=src py -m agentsec inspect runs/lab05_require_approval/trace.jsonl
-PYTHONPATH=src py -m agentsec inspect runs/lab05_require_approval_deny_by_default/trace.jsonl
+agentsec inspect runs/lab05_require_approval/trace.jsonl
+agentsec inspect runs/lab05_require_approval_deny_by_default/trace.jsonl
 
 # the evaluator's read-only counts for one of them
-PYTHONPATH=src py -m agentsec evaluate runs/lab05_require_approval/trace.jsonl
+agentsec evaluate runs/lab05_require_approval/trace.jsonl
 
 # check the shipped prediction for the approval run
-PYTHONPATH=src py -m agentsec predict \
+agentsec predict \
   runs/lab05_require_approval/trace.jsonl \
   configs/predictions/lab05_expect_approval.yaml
 
 # compare the two traces
-PYTHONPATH=src py -m agentsec compare \
+agentsec compare \
   runs/lab05_require_approval/trace.jsonl \
   runs/lab05_require_approval_deny_by_default/trace.jsonl
 ```

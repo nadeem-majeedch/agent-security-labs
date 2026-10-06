@@ -8,7 +8,7 @@ checks each result against the lab's own declared expectations
 final answer.
 
 ```bash
-PYTHONPATH=src py -m agentsec labs check
+agentsec labs check
 ```
 
 ```

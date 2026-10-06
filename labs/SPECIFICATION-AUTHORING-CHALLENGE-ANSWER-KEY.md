@@ -10,7 +10,7 @@ grounded in the **real** experiment, produced by running the reference
 specification with:
 
 ```bash
-PYTHONPATH=src py -m agentsec experiment lab05-authoring.yaml
+agentsec experiment lab05-authoring.yaml
 ```
 
 The central teaching point: a **design error** (exit `1`) and a **result state**

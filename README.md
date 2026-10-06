@@ -16,6 +16,92 @@ and the model they run against is a **deterministic fixture**, not a real LLM.
 
 ---
 
+## Start here in 60 seconds
+
+| Question | Short answer |
+| --- | --- |
+| **What is it?** | An offline, **deterministic** teaching laboratory for **AI-agent security**. One scripted agent, one mediated `ToolGateway`, in-memory tools, and a JSONL **trace** per run. |
+| **Who is it for?** | Students new to agent security, university courses, and instructors who want a self-contained lab sequence. No API key, no network, no prior security background. |
+| **What do you do?** | Install once, then for each of eight labs (**LAB-00 … LAB-07**) run one experiment and answer one question **from the trace**: *"What can I actually observe?"* |
+| **What do you learn?** | To keep four things apart — **requested**, **decided**, **executed**, **changed** — and to name the trace event that supports each claim. |
+| **How fast?** | First lab in about five minutes (below). |
+| **What does it *not* claim?** | **Not a benchmark**, no score or ranking; the model is a **fixture**, so nothing here is evidence about real model behaviour, real vulnerabilities or causality; and it makes **no research claim**. |
+
+```bash
+# 1. install (Python 3.11+)   ·   Windows: py -m pip install -e ".[dev]"
+python -m pip install -e ".[dev]"
+
+# 2. run your first lab, then read the trace it wrote
+agentsec run labs/LAB-00-setup/config.yaml
+agentsec inspect runs/lab00_setup/trace.jsonl
+agentsec evaluate runs/lab00_setup/trace.jsonl
+```
+
+> The editable install provides the `agentsec` command. If your shell cannot
+> find it, run the same commands as `python -m agentsec …` (or `py -m agentsec …`
+> on Windows).
+
+### What a run looks like
+
+Every tool call follows one path, and the trace records each step as a separate,
+parent-linked event:
+
+```text
+agent task ──▶ model turn ──▶ tool_requested
+                                   │
+                                   ▼
+                             ToolGateway (validate)
+                                   │
+                                   ▼
+            policy_decision  (allow / deny / require_approval)
+                    │                            │
+           allow ───┘                  deny / require_approval
+              │                                     │
+              ▼                                     ▼
+       tool_executed                          no execution
+              │
+              ▼
+         tool_result ──▶ JSONL trace
+```
+
+`agentsec inspect <trace> --events` prints a trace event by event — here a real,
+synthetic LAB-00 run (trimmed):
+
+```text
+trace: runs\lab00_setup\trace.jsonl
+run: lab00-run-1
+events: 12
+
+Event 4
+  type: tool_requested
+  fields:
+    args_redacted: {"expr": "2+3"}
+    tool_name: calculator
+
+Event 5
+  type: policy_decision
+  fields:
+    decision: allow
+    matched_rule: allow-calc
+
+Event 6
+  type: tool_executed          ← the tool really ran
+  fields:
+    tool_name: calculator
+
+Event 7
+  type: tool_result
+  fields:
+    ok: true
+    side_effects: -
+```
+
+**A request is not an execution:** `tool_requested` records the *ask*,
+`tool_executed` records that it *really ran*, and `policy_decision` sits between
+them. That one distinction is the spine of every lab.
+
+---
+
 ## What Agent Security Labs is
 
 An **offline, deterministic, mediated-agent security laboratory**.
@@ -170,19 +256,20 @@ the repository root. No API key and no network connection are needed.
 
 ```bash
 # 1. install (documentation and test extras are optional)
-py -m pip install -e ".[dev]"
+#    Linux / macOS:            Windows: py -m pip install -e ".[dev]"
+python -m pip install -e ".[dev]"
 
 # 2. run your first lab — this writes a trace
-PYTHONPATH=src py -m agentsec run labs/LAB-00-setup/config.yaml
+agentsec run labs/LAB-00-setup/config.yaml
 
 # 3. list the events it wrote, in order
-PYTHONPATH=src py -m agentsec inspect runs/lab00_setup/trace.jsonl
+agentsec inspect runs/lab00_setup/trace.jsonl
 
 # 4. evaluate the trace on its own (read-only; re-runs nothing)
-PYTHONPATH=src py -m agentsec evaluate runs/lab00_setup/trace.jsonl
+agentsec evaluate runs/lab00_setup/trace.jsonl
 
 # 5. confirm every lab still behaves as documented
-PYTHONPATH=src py -m agentsec labs check
+agentsec labs check
 ```
 
 Then:
@@ -205,7 +292,7 @@ Then:
   (it does not contain the exercise answers).
 
 Build the documentation site locally with
-`py -m pip install -e ".[docs]"` and `py -m mkdocs build --strict`.
+`python -m pip install -e ".[docs]"` and `python -m mkdocs build --strict`.
 
 ---
 
@@ -228,12 +315,12 @@ Re-run locally at this revision:
 
 | Check | Command | Result |
 | --- | --- | --- |
-| Release readiness (all gates) | `py scripts/release_check.py` | **READY WITH WARNINGS** (exit 0) |
-| Licence metadata and file coverage | `py scripts/check_licensing.py` | **9/9 checks pass** (exit 0) |
-| Version consistency | `py scripts/check_version.py` | **3/3 checks pass** (exit 0) |
-| Test suite | `PYTHONPATH=src py -m pytest` | **1298 tests pass** (exit 0) |
-| Lab self-check | `PYTHONPATH=src py -m agentsec labs check` | **8/8 labs pass** (exit 0) |
-| Documentation build | `py -m mkdocs build --strict` | **builds with no warnings or errors** (exit 0) |
+| Release readiness (all gates) | `python scripts/release_check.py` | **READY WITH WARNINGS** (exit 0) |
+| Licence metadata and file coverage | `python scripts/check_licensing.py` | **9/9 checks pass** (exit 0) |
+| Version consistency | `python scripts/check_version.py` | **3/3 checks pass** (exit 0) |
+| Test suite | `python -m pytest` | **1298 tests pass** (exit 0) |
+| Lab self-check | `agentsec labs check` | **8/8 labs pass** (exit 0) |
+| Documentation build | `python -m mkdocs build --strict` | **builds with no warnings or errors** (exit 0) |
 
 [`scripts/release_check.py`](scripts/release_check.py) runs every gate above in a
 single read-only pass and reports one classification — `READY`,

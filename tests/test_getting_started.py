@@ -45,8 +45,8 @@ ROOT = Path(__file__).resolve().parents[1]
 GETTING_STARTED = ROOT / "labs" / "GETTING-STARTED.md"
 
 #: The exact commands the guided step must document, in repository convention.
-DEMO_COMMAND = "PYTHONPATH=src py -m agentsec demo lab04-two-policies"
-DEMO_JSON_COMMAND = "PYTHONPATH=src py -m agentsec demo lab04-two-policies --json"
+DEMO_COMMAND = "agentsec demo lab04-two-policies"
+DEMO_JSON_COMMAND = "agentsec demo lab04-two-policies --json"
 
 #: The section heading the exercise is filed under.
 SECTION_HEADING = "## 5. Try a two-policy comparison"
@@ -58,10 +58,10 @@ LAB04_LINK = "LAB-04-tool-misuse/README.md#same-lab-different-policy"
 #: The two LAB-05 commands the approval-vs-deny step must document: the shipped
 #: lab and the deny-by-default example config.
 LAB05_APPROVAL_COMMAND = (
-    "PYTHONPATH=src py -m agentsec run labs/LAB-05-require-approval/config.yaml"
+    "agentsec run labs/LAB-05-require-approval/config.yaml"
 )
 LAB05_DENY_COMMAND = (
-    "PYTHONPATH=src py -m agentsec run "
+    "agentsec run "
     "configs/examples/lab05_require_approval_deny_by_default.yaml"
 )
 
@@ -73,10 +73,10 @@ LAB05_LINK = "LAB-05-require-approval/README.md#same-lab-two-decisions"
 
 #: The two commands the cross-lab step must document: the two introductory labs.
 CROSS_LAB_COMMAND_A = (
-    "PYTHONPATH=src py -m agentsec run labs/LAB-01-benign-agent/config.yaml"
+    "agentsec run labs/LAB-01-benign-agent/config.yaml"
 )
 CROSS_LAB_COMMAND_B = (
-    "PYTHONPATH=src py -m agentsec run "
+    "agentsec run "
     "labs/LAB-02-direct-prompt-injection/config.yaml"
 )
 
@@ -94,10 +94,10 @@ DIFFERING_SECTION_HEADING = "## 8. Compare two labs that differ"
 
 #: The two commands and two trace paths the differing-comparison step documents.
 DIFFERING_COMMAND_A = (
-    "PYTHONPATH=src py -m agentsec run labs/LAB-01-benign-agent/config.yaml"
+    "agentsec run labs/LAB-01-benign-agent/config.yaml"
 )
 DIFFERING_COMMAND_B = (
-    "PYTHONPATH=src py -m agentsec run labs/LAB-05-require-approval/config.yaml"
+    "agentsec run labs/LAB-05-require-approval/config.yaml"
 )
 DIFFERING_TRACE_A = "runs/lab01_benign/trace.jsonl"
 DIFFERING_TRACE_B = "runs/lab05_require_approval/trace.jsonl"
@@ -111,7 +111,7 @@ DIFFERING_LINKS = (
 #: The heading of the predict-before-you-run step (Phase 8).
 PREDICT_SECTION_HEADING = "## 9. Predict before you run"
 #: The predict invocation, trace and prediction the step must document.
-PREDICT_MARKER = "PYTHONPATH=src py -m agentsec predict"
+PREDICT_MARKER = "agentsec predict"
 PREDICT_TRACE = "runs/lab04_tool_misuse/trace.jsonl"
 PREDICT_PREDICTION = "configs/predictions/lab04.yaml"
 #: The lab page the predict step must link to.
@@ -127,14 +127,14 @@ PREDICT_EXAMPLES = (
 #: The composed predict → run → compare capstone step (Phase 8B).
 COMPOSE_SECTION_HEADING = "## 10. Predict → Run → Compare → Interpret"
 COMPOSE_RUN_A = (
-    "PYTHONPATH=src py -m agentsec run labs/LAB-01-benign-agent/config.yaml"
+    "agentsec run labs/LAB-01-benign-agent/config.yaml"
 )
 COMPOSE_RUN_B = (
-    "PYTHONPATH=src py -m agentsec run labs/LAB-05-require-approval/config.yaml"
+    "agentsec run labs/LAB-05-require-approval/config.yaml"
 )
-COMPOSE_PREDICT = "PYTHONPATH=src py -m agentsec predict"
+COMPOSE_PREDICT = "agentsec predict"
 COMPOSE_PREDICTION = "configs/predictions/lab05_expect_approval.yaml"
-COMPOSE_COMPARE = "PYTHONPATH=src py -m agentsec compare"
+COMPOSE_COMPARE = "agentsec compare"
 COMPOSE_TRACES = (
     "runs/lab01_benign/trace.jsonl",
     "runs/lab05_require_approval/trace.jsonl",
@@ -149,13 +149,13 @@ COMPOSE_MISREADINGS_MARKER = "Common misreadings"
 #: The predict-a-difference capstone step (Phase 8C).
 DIFFERENCE_SECTION_HEADING = "## 11. Predict a difference before comparing"
 DIFFERENCE_RUN_A = (
-    "PYTHONPATH=src py -m agentsec run "
+    "agentsec run "
     "configs/examples/lab04_tool_misuse_allow_all.yaml"
 )
 DIFFERENCE_RUN_B = (
-    "PYTHONPATH=src py -m agentsec run labs/LAB-04-tool-misuse/config.yaml"
+    "agentsec run labs/LAB-04-tool-misuse/config.yaml"
 )
-DIFFERENCE_COMPARE = "PYTHONPATH=src py -m agentsec compare"
+DIFFERENCE_COMPARE = "agentsec compare"
 DIFFERENCE_TRACE_A = "runs/lab04_tool_misuse_allow_all/trace.jsonl"
 DIFFERENCE_TRACE_B = "runs/lab04_tool_misuse/trace.jsonl"
 DIFFERENCE_PREDICTION = "configs/predictions/lab04.yaml"

@@ -40,7 +40,7 @@ STATES = (
 
 #: The exact commands the student page must document, in repository convention.
 EXPERIMENT_COMMAND = (
-    "PYTHONPATH=src py -m agentsec experiment "
+    "agentsec experiment "
     "configs/experiments/lab04-policy-intervention.yaml"
 )
 EXPERIMENT_JSON_COMMAND = EXPERIMENT_COMMAND + " --json"

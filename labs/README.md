@@ -25,13 +25,13 @@ Every lab works the same way. From the repository root:
 
 ```bash
 # 1. run the experiment (writes a trace)
-PYTHONPATH=src py -m agentsec run labs/LAB-0X-.../config.yaml
+agentsec run labs/LAB-0X-.../config.yaml
 
 # 2. inspect the trace it wrote (short summary, in order)
-PYTHONPATH=src py -m agentsec inspect runs/<run_dir>/trace.jsonl
+agentsec inspect runs/<run_dir>/trace.jsonl
 
 # 3. evaluate the trace on its own (read-only; does NOT re-run anything)
-PYTHONPATH=src py -m agentsec evaluate runs/<run_dir>/trace.jsonl
+agentsec evaluate runs/<run_dir>/trace.jsonl
 ```
 
 Start with **LAB-00** to confirm your setup, then work through the labs in order.
@@ -54,7 +54,7 @@ the fields specific to that `event_type` — the shared header is listed once),
 every recorded **side effect**, and the run's **flags** and **warnings**:
 
 ```bash
-PYTHONPATH=src py -m agentsec inspect runs/<run_dir>/trace.jsonl --events
+agentsec inspect runs/<run_dir>/trace.jsonl --events
 ```
 
 ```text
@@ -95,7 +95,7 @@ runs — for example the same lab under two policies, or one lab against another
 without re-running anything**:
 
 ```bash
-PYTHONPATH=src py -m agentsec compare runs/<a>/trace.jsonl runs/<b>/trace.jsonl
+agentsec compare runs/<a>/trace.jsonl runs/<b>/trace.jsonl
 ```
 
 The comparison is factual and structural. It reports:
